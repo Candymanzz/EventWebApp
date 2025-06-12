@@ -1,0 +1,75 @@
+﻿using EventWebApp.Application.DTOs;
+using EventWebApp.Application.Interfaces;
+using EventWebApp.Core.Model;
+using EventWebApp.Infrastructure.Repositories;
+using EventWebApp.Infrastructure.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace EventWebApp.WebAPI.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
+    {
+        private readonly ITokenService tokenService;
+        private readonly IUserRepository userRepository;
+        private readonly IConfiguration configuration;
+
+        public AuthController(ITokenService tokenService, IUserRepository userRepository, IConfiguration configuration)
+        {
+            this.tokenService = tokenService;
+            this.userRepository = userRepository;
+            this.configuration = configuration;
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            var user = await userRepository.GetByEmailAsync(request.Email);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = request.Email,
+                    Role = "User"
+                };
+
+                await userRepository.AddAsync(user);
+            }
+
+            var accessToken = tokenService.GenerateAccessToken(user);
+            var refreshToken = tokenService.GenerateRefreshToken();
+
+            var response = new AuthResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
+
+            return Ok(response);
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+        {
+            var user = await userRepository.GetByRefreshTokenAsync(request.RefreshToken);
+            if (user == null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
+                return Unauthorized("Invalid or expired refresh token");
+
+            var newAccessToken = tokenService.GenerateAccessToken(user);
+            var newRefreshToken = tokenService.GenerateRefreshToken();
+            var expiry = DateTime.UtcNow.AddDays(int.Parse(configuration["Jwt:RefreshTokenDays"]!));
+
+            await userRepository.UpdateRefreshTokenAsync(user.Id, newRefreshToken, expiry);
+
+            return Ok(new AuthResponse
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            });
+        }
+
+    }
+}
