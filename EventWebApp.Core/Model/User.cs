@@ -30,9 +30,14 @@ namespace EventWebApp.Core.Model
         [StringLength(200)]
         public string Email { get; set; } = string.Empty; // Unique!!
 
-        public Guid EventId { get; set; }
+        public ICollection<Event> Events { get; set; } = new List<Event>();
 
-        public virtual Event Event { get; set; } = new Event();
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+
+        [Required]
+        [StringLength(10)]
+        public string Role { get; set; } = "User";
 
         [NotMapped]
         public string FullName => $"{FirstName} {LastName}";
