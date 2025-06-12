@@ -8,7 +8,33 @@ namespace EventWebApp.Infrastructure.Date.Configurations
     {
         public void Configure(EntityTypeBuilder<Event> builder)
         {
-            builder.HasMany(e => e.Users).WithOne(u => u.Event).HasForeignKey(u => u.EventId);
+            builder.HasKey(e => e.Id);
+
+            builder.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            builder.Property(e => e.Description)
+                .IsRequired();
+
+            builder.Property(e => e.DateTime)
+                .IsRequired();
+
+            builder.Property(e => e.Location)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            builder.Property(e => e.Category)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            builder.Property(e => e.MaxParticipants)
+                .IsRequired();
+
+            builder.Property(e => e.ImageUrl)
+                .HasMaxLength(500);
+
+            builder.HasMany(e => e.Users).WithMany(u => u.Events).UsingEntity(ey => ey.ToTable("EventsUsers"));
         }
     }
 }

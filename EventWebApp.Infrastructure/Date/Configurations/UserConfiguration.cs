@@ -8,7 +8,41 @@ namespace EventWebApp.Infrastructure.Date.Configurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
+            builder.HasKey(u => u.Id);
+
+            builder.Property(u => u.FirstName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(u => u.LastName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(u => u.Email)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            builder.HasIndex(u => u.Email)
+                .IsUnique(); // чтобы email был уникальным
+
+            builder.Property(u => u.DateOfBirth)
+                .IsRequired();
+
+            builder.Property(u => u.RegistrationDate)
+                .IsRequired();
+
+            builder.Property(u => u.Role)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            builder.Property(u => u.RefreshToken)
+                .HasMaxLength(200);
+
+            builder.Property(u => u.RefreshTokenExpiryTime);
+
             builder.HasIndex(u => u.Email).IsUnique();
+
+            builder.HasMany(u => u.Events).WithMany(e => e.Users);
         }
     }
 }
