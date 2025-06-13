@@ -8,6 +8,7 @@ import AdminEventsPage from '../admin/AdminEventsPage';
 import { RequireRole } from './RequireRole';
 import CreateEventPage from '../admin/CreateEventPage';
 import EditEventPage from '../admin/EditEventPage';
+import RegisterDetailsPage from '../pages/RegisterDetailsPage';
 
 export const AppRouter = () => {
     return (
@@ -55,6 +56,7 @@ export const AppRouter = () => {
                     </RequireRole>
                 }
             />
+            <Route path="/register-details" element={<RegisterDetailsPage />} />
         </Routes>
     );
 };

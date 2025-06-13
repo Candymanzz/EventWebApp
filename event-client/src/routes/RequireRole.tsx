@@ -5,7 +5,7 @@ export const RequireRole = ({ role, children }: { role: string, children: React.
     const { token } = useAuth();
 
     const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
-    const userRole = payload?.role;
+    const userRole = payload?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
     if (!token || userRole !== role) {
         return <Navigate to="/login" />;
