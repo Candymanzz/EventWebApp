@@ -1,6 +1,6 @@
-﻿using EventWebApp.Core.Model;
+﻿using EventWebApp.Application.Interfaces;
+using EventWebApp.Core.Model;
 using EventWebApp.Infrastructure.Date;
-using EventWebApp.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventWebApp.Infrastructure.Repositories
@@ -9,21 +9,25 @@ namespace EventWebApp.Infrastructure.Repositories
     {
         private readonly AppDbContext appDbContext;
 
-        public UserRepository (AppDbContext appDbContext)
+        public UserRepository(AppDbContext appDbContext)
         {
             this.appDbContext = appDbContext;
         }
 
         public async Task AddAsync(User user)
         {
-            appDbContext.Users.Add(user); // AddAsync????
+            appDbContext.Users.Add(user);
             await appDbContext.SaveChangesAsync();
         }
 
         public async Task CancelUserFromEvent(Guid userId, Guid eventId)
         {
-            var user = await appDbContext.Users.Include(u => u.Events).FirstOrDefaultAsync(u => u.Id == userId);
-            var _event = await appDbContext.Events.Include(e => e.Users).FirstOrDefaultAsync(e => e.Id == eventId);
+            var user = await appDbContext
+                .Users.Include(u => u.Events)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+            var _event = await appDbContext
+                .Events.Include(e => e.Users)
+                .FirstOrDefaultAsync(e => e.Id == eventId);
 
             if (_event == null || user == null)
             {
@@ -38,57 +42,74 @@ namespace EventWebApp.Infrastructure.Repositories
 
         public async Task<User?> GetByIdAsync(Guid id)
         {
-            return await appDbContext.Users.Include(u => u.Events).FirstOrDefaultAsync(u => u.Id == id);
+            return await appDbContext
+                .Users.Include(u => u.Events)
+                .FirstOrDefaultAsync(u => u.Id == id);
         }
 
         public async Task<IEnumerable<User>> GetUsersByEvent(Guid id)
         {
-            var _event = await appDbContext.Events.Include(e => e.Users).FirstOrDefaultAsync(e => e.Id == id);
+            var _event = await appDbContext
+                .Events.Include(e => e.Users)
+                .FirstOrDefaultAsync(e => e.Id == id);
 
             return _event?.Users ?? Enumerable.Empty<User>(); //null
         }
 
         public async Task RegisterUserToEventAsync(Guid userId, Guid eventId)
         {
-            var user = await appDbContext.Users.Include(u => u.Events).FirstOrDefaultAsync(u => u.Id == userId);
-            var _event = await appDbContext.Events.Include(e => e.Users).FirstOrDefaultAsync(e => e.Id == eventId);
+            var user = await appDbContext
+                .Users.Include(u => u.Events)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+            var _event = await appDbContext
+                .Events.Include(e => e.Users)
+                .FirstOrDefaultAsync(e => e.Id == eventId);
 
             if (_event == null || user == null)
             {
                 throw new InvalidOperationException("User or Event not found.");
             }
 
-            if (!_event.Users.Contains(user))
+            if (_event.Users.Contains(user))
             {
-                _event.Users.Add(user);
+                throw new InvalidOperationException("User is already registered for this event.");
             }
 
+            if (_event.Users.Count >= _event.MaxParticipants)
+            {
+                throw new InvalidOperationException(
+                    "Event has reached maximum number of participants."
+                );
+            }
+
+            _event.Users.Add(user);
             await appDbContext.SaveChangesAsync();
         }
 
         public async Task<User?> GetByEmailAsync(string email)
         {
-            return await appDbContext.Users
-                .Include(u => u.Events)
+            return await appDbContext
+                .Users.Include(u => u.Events)
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<User?> GetByRefreshTokenAsync(string refreshToken)
         {
-            return await appDbContext.Users
-                .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+            return await appDbContext.Users.FirstOrDefaultAsync(u =>
+                u.RefreshToken == refreshToken
+            );
         }
 
         public async Task UpdateRefreshTokenAsync(Guid userId, string refreshToken, DateTime expiry)
         {
             var user = await appDbContext.Users.FindAsync(userId);
-            if (user is null) return;
+            if (user is null)
+                return;
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = expiry;
 
             await appDbContext.SaveChangesAsync();
         }
-
     }
 }

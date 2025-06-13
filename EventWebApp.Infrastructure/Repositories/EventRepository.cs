@@ -11,7 +11,7 @@ namespace EventWebApp.Infrastructure.Repositories
     {
         private readonly AppDbContext appDbContext;
 
-        public EventRepository (AppDbContext appDbContext)
+        public EventRepository(AppDbContext appDbContext)
         {
             this.appDbContext = appDbContext;
         }
@@ -37,36 +37,58 @@ namespace EventWebApp.Infrastructure.Repositories
             return await appDbContext.Events.Include(e => e.Users).ToListAsync();
         }
 
-        public async Task<IEnumerable<Event>> GetByFiltersAsync(string? category, string? location, DateTime? dateTime)
+        public async Task<IEnumerable<Event>> GetByFiltersAsync(
+            string? category,
+            string? location,
+            DateTime? dateTime,
+            string? title
+        )
         {
-            var query = appDbContext.Events.AsQueryable();
+            var query = appDbContext.Events.Include(e => e.Users).AsQueryable();
+
+            if (!string.IsNullOrEmpty(title))
+            {
+                Console.WriteLine($"Applying title filter: {title}");
+                query = query.Where(e => e.Title.ToLower().Contains(title.ToLower()));
+            }
 
             if (!string.IsNullOrEmpty(category))
             {
-                query = query.Where(e => e.Category == category);
+                Console.WriteLine($"Applying category filter: {category}");
+                query = query.Where(e => e.Category.ToLower() == category.ToLower());
             }
 
             if (!string.IsNullOrEmpty(location))
             {
-                query = query.Where(e => e.Location == location);
+                Console.WriteLine($"Applying location filter: {location}");
+                query = query.Where(e => e.Location.ToLower() == location.ToLower());
             }
 
             if (dateTime.HasValue)
             {
-                query = query.Where(e => e.DateTime.Date == dateTime.Value.Date);
+                Console.WriteLine($"Applying date filter: {dateTime}");
+                var utcDate = DateTime.SpecifyKind(dateTime.Value.Date, DateTimeKind.Utc);
+                query = query.Where(e => e.DateTime.Date == utcDate.Date);
             }
 
-            return await query.ToListAsync();
+            var result = await query.ToListAsync();
+            Console.WriteLine($"Found {result.Count} events after filtering");
+            return result;
         }
 
         public async Task<Event?> GetByIdAsync(Guid id)
         {
-            return await appDbContext.Events.Include(e => e.Users).FirstOrDefaultAsync(e => e.Id == id);
+            return await appDbContext
+                .Events.Include(e => e.Users)
+                .FirstOrDefaultAsync(e => e.Id == id);
         }
 
-        public async Task<Event?> GetByTitleAsync(string title)
+        public async Task<IEnumerable<Event>> GetByTitleAsync(string title)
         {
-            return await appDbContext.Events.FirstOrDefaultAsync(e => e.Title == title);
+            return await appDbContext
+                .Events.Include(e => e.Users)
+                .Where(e => e.Title.ToLower().Contains(title.ToLower()))
+                .ToListAsync();
         }
 
         public async Task UpdateAsync(Event _event)
@@ -91,19 +113,23 @@ namespace EventWebApp.Infrastructure.Repositories
 
             var total = await query.CountAsync();
 
-            var items = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
 
             return new PaginatedResult<Event>
             {
                 Items = items,
                 TotalCount = total,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
             };
         }
 
+        public async Task<List<Event>> GetEventsByUserIdAsync(Guid userId)
+        {
+            return await appDbContext
+                .Events.Include(e => e.Users)
+                .Where(e => e.Users.Any(u => u.Id == userId))
+                .ToListAsync();
+        }
     }
 }
