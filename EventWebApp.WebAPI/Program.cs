@@ -1,3 +1,4 @@
+using System.Text;
 using EventWebApp.Application.Interfaces;
 using EventWebApp.Application.Mappings;
 using EventWebApp.Application.UseCases.Event;
@@ -11,7 +12,6 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 namespace EventWebApp.WebAPI
 {
@@ -60,6 +60,7 @@ namespace EventWebApp.WebAPI
             builder.Services.AddScoped<GetUsersByEventUseCase>();
             builder.Services.AddScoped<RegisterUserToEventUseCase>();
             builder.Services.AddScoped<RegisterUserUseCase>();
+            builder.Services.AddScoped<GetUserEventsUseCase>();
 
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
             builder.Services.AddScoped<INotificationService, EmailNotificationService>();
@@ -69,26 +70,27 @@ namespace EventWebApp.WebAPI
             var jwtConfig = builder.Configuration.GetSection("Jwt");
             var key = Encoding.UTF8.GetBytes(jwtConfig["Key"]!);
 
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(opt =>
-            {
-                opt.RequireHttpsMetadata = false;
-                opt.SaveToken = true;
-                opt.TokenValidationParameters = new TokenValidationParameters
+            builder
+                .Services.AddAuthentication(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtConfig["Issuer"],
-                    ValidateAudience = true,
-                    ValidAudience = jwtConfig["Audience"],
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
-                };
-            });
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(opt =>
+                {
+                    opt.RequireHttpsMetadata = false;
+                    opt.SaveToken = true;
+                    opt.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = jwtConfig["Issuer"],
+                        ValidateAudience = true,
+                        ValidAudience = jwtConfig["Audience"],
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                    };
+                });
 
             builder.Services.AddAuthorization(options =>
             {
@@ -101,15 +103,17 @@ namespace EventWebApp.WebAPI
 
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowFrontend", policy =>
-                {
-                    policy
-                        .WithOrigins("http://localhost:3000")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
-                });
+                options.AddPolicy(
+                    "AllowFrontend",
+                    policy =>
+                    {
+                        policy
+                            .WithOrigins("http://localhost:3000")
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                    }
+                );
             });
-
 
             ////////////////////////////////////
 
@@ -125,15 +129,18 @@ namespace EventWebApp.WebAPI
 
             app.UseMiddleware<Middleware.ExceptionHandlingMiddleware>();
 
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                OnPrepareResponse = ctx =>
+            app.UseStaticFiles(
+                new StaticFileOptions
                 {
-                    ctx.Context.Response.Headers.Append(
-                        "Cache-Control", "public, max-age=604800"
-                    );
+                    OnPrepareResponse = ctx =>
+                    {
+                        ctx.Context.Response.Headers.Append(
+                            "Cache-Control",
+                            "public, max-age=604800"
+                        );
+                    },
                 }
-            });
+            );
 
             app.UseSwagger();
             app.UseSwaggerUI();
