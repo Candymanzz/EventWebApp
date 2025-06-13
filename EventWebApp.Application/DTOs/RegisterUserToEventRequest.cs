@@ -8,7 +8,6 @@ namespace EventWebApp.Application.DTOs
 {
     public class RegisterUserToEventRequest
     {
-        public Guid UserId { get; set; }
         public Guid EventId { get; set; }
     }
 }
