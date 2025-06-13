@@ -11,7 +11,11 @@ namespace EventWebApp.Application.UseCases.Event
         private readonly IValidator<CreateEventRequest> validator;
         private readonly IMapper mapper;
 
-        public CreateEventUseCase(IEventRepository eventRepository, IValidator<CreateEventRequest> validator, IMapper mapper)
+        public CreateEventUseCase(
+            IEventRepository eventRepository,
+            IValidator<CreateEventRequest> validator,
+            IMapper mapper
+        )
         {
             this.eventRepository = eventRepository;
             this.validator = validator;
@@ -28,6 +32,7 @@ namespace EventWebApp.Application.UseCases.Event
             }
 
             var ev = mapper.Map<Core.Model.Event>(request);
+            ev.DateTime = DateTime.SpecifyKind(ev.DateTime, DateTimeKind.Utc);
             await eventRepository.AddAsync(ev);
             return mapper.Map<EventDto>(ev);
         }

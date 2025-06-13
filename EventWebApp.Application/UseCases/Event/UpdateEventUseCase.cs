@@ -11,7 +11,11 @@ namespace EventWebApp.Application.UseCases.Event
         private readonly IValidator<UpdateEventRequest> validator;
         private readonly IMapper mapper;
 
-        public UpdateEventUseCase (IEventRepository eventRepository, IValidator<UpdateEventRequest> validator, IMapper mapper)
+        public UpdateEventUseCase(
+            IEventRepository eventRepository,
+            IValidator<UpdateEventRequest> validator,
+            IMapper mapper
+        )
         {
             this.eventRepository = eventRepository;
             this.validator = validator;
@@ -27,6 +31,7 @@ namespace EventWebApp.Application.UseCases.Event
             }
 
             var update = mapper.Map<Core.Model.Event>(request);
+            update.DateTime = DateTime.SpecifyKind(update.DateTime, DateTimeKind.Utc);
             await eventRepository.UpdateAsync(update);
         }
     }
