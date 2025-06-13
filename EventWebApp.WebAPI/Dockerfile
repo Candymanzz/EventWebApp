@@ -1,23 +1,21 @@
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+# 1. Stage — Build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /src
-COPY ["EventWebApp.WebAPI/EventWebApp.WebAPI.csproj", "EventWebApp.WebAPI/"]
-COPY ["EventWebApp.Application/EventWebApp.Application.csproj", "EventWebApp.Application/"]
-COPY ["EventWebApp.Core/EventWebApp.Core.csproj", "EventWebApp.Core/"]
-COPY ["EventWebApp.Infrastructure/EventWebApp.Infrastructure.csproj", "EventWebApp.Infrastructure/"]
-RUN dotnet restore "EventWebApp.WebAPI/EventWebApp.WebAPI.csproj"
+COPY EventWebApp/*.csproj ./EventWebApp/
+COPY EventWebApp.Application/*.csproj ./EventWebApp.Application/
+COPY EventWebApp.Core/*.csproj ./EventWebApp.Core/
+COPY EventWebApp.Infrastructure/*.csproj ./EventWebApp.Infrastructure/
+COPY EventWebApp.WebAPI/*.csproj ./EventWebApp.WebAPI/
+
+RUN dotnet restore ./EventWebApp.WebAPI/EventWebApp.WebAPI.csproj
+
 COPY . .
-WORKDIR "/src/EventWebApp.WebAPI"
-RUN dotnet build "EventWebApp.WebAPI.csproj" -c Release -o /app/build
+WORKDIR /app/EventWebApp.WebAPI
+RUN dotnet publish -c Release -o /out
 
-FROM build AS publish
-RUN dotnet publish "EventWebApp.WebAPI.csproj" -c Release -o /app/publish
-
-FROM base AS final
+# 2. Stage — Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /out ./
 ENTRYPOINT ["dotnet", "EventWebApp.WebAPI.dll"]

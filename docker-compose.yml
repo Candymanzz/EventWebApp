@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 
 services:
   backend:
@@ -6,32 +6,36 @@ services:
       context: .
       dockerfile: EventWebApp.WebAPI/Dockerfile
     ports:
-      - "5000:80"  # Если порт 5000 занят, можно изменить на другой, например "5001:80"
+      - "5112:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=db;Database=eventdb;Username=postgres;Password=postgres
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=eventdb;Username=postgres;Password=postgres
+      - Jwt__Key=supersecretkey123456789
+      - Jwt__Issuer=EventApp
+      - Jwt__Audience=EventAppUsers
     depends_on:
-      - db
+      - postgres
 
   frontend:
     build:
       context: ./event-client
       dockerfile: Dockerfile
     ports:
-      - "80:80"  # Если порт 80 занят, можно изменить на другой, например "8080:80"
+      - "3000:80"
     depends_on:
       - backend
 
-  db:
-    image: postgres:16-alpine
+  postgres:
+    image: postgres:15
+    restart: always
     environment:
-      - POSTGRES_DB=eventdb
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: eventdb
     ports:
-      - "5432:5432"  # Если порт 5432 занят, можно изменить на другой, например "5433:5432"
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
-  postgres_data: 
+  pgdata:
