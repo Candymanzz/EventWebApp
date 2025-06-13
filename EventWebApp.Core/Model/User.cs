@@ -23,7 +23,7 @@ namespace EventWebApp.Core.Model
 
         [Required]
         [DataType(DataType.DateTime)]
-        public DateTime RegistrationDate {  get; set; } = DateTime.UtcNow;
+        public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;
 
         [Required]
         [EmailAddress]
@@ -43,8 +43,14 @@ namespace EventWebApp.Core.Model
         public string FullName => $"{FirstName} {LastName}";
 
         [NotMapped]
-        public int Age => DateTime.UtcNow.Year - DateOfBirth.Year - 
-            (DateTime.UtcNow.Date < DateOfBirth.Date.AddYears(DateTime.UtcNow.Year - DateOfBirth.Year) ? 1 : 0);
+        public int Age =>
+            DateTime.UtcNow.Year
+            - DateOfBirth.Year
+            - (
+                DateTime.UtcNow.Date
+                < DateOfBirth.Date.AddYears(DateTime.UtcNow.Year - DateOfBirth.Year)
+                    ? 1
+                    : 0
+            );
     }
 }
-
