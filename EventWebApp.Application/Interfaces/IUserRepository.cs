@@ -4,7 +4,7 @@ namespace EventWebApp.Application.Interfaces
 {
     public interface IUserRepository
     {
-        Task<User?> GetByIdAsync (Guid id);
+        Task<User?> GetByIdAsync(Guid id);
         Task AddAsync(User user);
         Task RegisterUserToEventAsync(Guid userId, Guid eventId);
         Task CancelUserFromEvent(Guid userId, Guid eventId);
