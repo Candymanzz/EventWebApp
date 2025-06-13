@@ -59,13 +59,23 @@ namespace EventWebApp.WebAPI.Controllers
 
         [HttpGet("filter")]
         public async Task<IActionResult> Filter(
-            [FromQuery] string? cotegoty,
+            [FromQuery] string? category,
             [FromQuery] string? location,
-            [FromQuery] DateTime? dateTime
+            [FromQuery] DateTime? dateTime,
+            [FromQuery] string? title
         )
         {
-            var result = await filterEventsUseCase.ExecuteAsync(cotegoty, location, dateTime);
-            return Ok(result);
+            Console.WriteLine(
+                $"Received filter request - Category: {category}, Location: {location}, DateTime: {dateTime}, Title: {title}"
+            );
+            var events = await filterEventsUseCase.ExecuteAsync(
+                category,
+                location,
+                dateTime,
+                title
+            );
+            Console.WriteLine($"Found {events.Count()} events");
+            return Ok(events);
         }
 
         [Authorize(Policy = "AdminOnly")]
@@ -92,11 +102,16 @@ namespace EventWebApp.WebAPI.Controllers
             return NoContent();
         }
 
-        [HttpGet("title/{title}")]
-        public async Task<IActionResult> GetByTitle(string title)
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchByTitle([FromQuery] string title)
         {
-            var result = await getByTitleUseCase.ExecuteAsync(title);
-            return result == null ? NotFound() : Ok(result);
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return BadRequest("Search title cannot be empty");
+            }
+
+            var events = await getByTitleUseCase.ExecuteAsync(title);
+            return Ok(events);
         }
 
         [Authorize(Policy = "AdminOnly")]
@@ -128,13 +143,12 @@ namespace EventWebApp.WebAPI.Controllers
             return Ok(result);
         }
 
-
         [HttpGet("test-email")]
         public async Task<IActionResult> TestEmail([FromServices] INotificationService notifier)
         {
             await notifier.NotifyUsersAsync(
-                new[] { "semenovegor546@gmail.com" },
-                "Здравствуйте, Семенов Егор",
+                new[] { "Pavel91104@gmail.com" },
+                "Здравствуйте, Павел",
                 "Мы будем рады видеть вас на собеседовании на эливетор."
             );
 

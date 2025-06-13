@@ -1,4 +1,5 @@
-﻿using EventWebApp.Application.DTOs;
+﻿using System.Security.Claims;
+using EventWebApp.Application.DTOs;
 using EventWebApp.Application.UseCases.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,18 +15,23 @@ namespace EventWebApp.WebAPI.Controllers
         private readonly GetUsersByEventUseCase getUserByEventUseCase;
         private readonly RegisterUserToEventUseCase registerUserToEventUseCase;
         private readonly CancelUserFromEventUseCase cancelUserFromEventUseCase;
+        private readonly GetUserEventsUseCase getUserEventsUseCase;
 
-        public UsersController (RegisterUserUseCase registerUserUseCase, 
+        public UsersController(
+            RegisterUserUseCase registerUserUseCase,
             GetUserByIdUseCase getUserByIdUseCase,
             GetUsersByEventUseCase getUserByEventUseCase,
             RegisterUserToEventUseCase registerUserToEventUseCase,
-            CancelUserFromEventUseCase cancelUserFromEventUseCase)
+            CancelUserFromEventUseCase cancelUserFromEventUseCase,
+            GetUserEventsUseCase getUserEventsUseCase
+        )
         {
             this.registerUserUseCase = registerUserUseCase;
             this.getUserByIdUseCase = getUserByIdUseCase;
             this.getUserByEventUseCase = getUserByEventUseCase;
             this.registerUserToEventUseCase = registerUserToEventUseCase;
             this.cancelUserFromEventUseCase = cancelUserFromEventUseCase;
+            this.getUserEventsUseCase = getUserEventsUseCase;
         }
 
         [HttpGet("{id}")]
@@ -36,7 +42,9 @@ namespace EventWebApp.WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register([FromBody] UserRegistrationRequest userRegistrationRequest)
+        public async Task<IActionResult> Register(
+            [FromBody] UserRegistrationRequest userRegistrationRequest
+        )
         {
             var result = await registerUserUseCase.ExecuteAsync(userRegistrationRequest);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
@@ -44,7 +52,7 @@ namespace EventWebApp.WebAPI.Controllers
 
         [Authorize(Policy = "AdminOnly")]
         [HttpGet("by-event/{eventId}")]
-        public async Task<IActionResult> GetUsersByEvent (Guid eventId)
+        public async Task<IActionResult> GetUsersByEvent(Guid eventId)
         {
             var result = await getUserByEventUseCase.ExecuteAsync(eventId);
             return Ok(result);
@@ -52,18 +60,42 @@ namespace EventWebApp.WebAPI.Controllers
 
         [Authorize(Policy = "UserOnly")]
         [HttpPost("register-to-event")]
-        public async Task<IActionResult> RegisterToEvent([FromBody] RegisterUserToEventRequest registerUserToEventRequest)
+        public async Task<IActionResult> RegisterToEvent(
+            [FromBody] RegisterUserToEventRequest request
+        )
         {
-            await registerUserToEventUseCase.ExecuteAsync(registerUserToEventRequest.UserId, registerUserToEventRequest.EventId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return Unauthorized();
+
+            await registerUserToEventUseCase.ExecuteAsync(Guid.Parse(userId), request.EventId);
             return Ok();
         }
 
         [Authorize(Policy = "UserOnly")]
         [HttpPost("cancel-from-event")]
-        public async Task<IActionResult> CancelFromEvent([FromBody] RegisterUserToEventRequest registerUserToEventRequest)
+        public async Task<IActionResult> CancelFromEvent(
+            [FromBody] RegisterUserToEventRequest request
+        )
         {
-            await cancelUserFromEventUseCase.ExecuteAsync(registerUserToEventRequest.UserId, registerUserToEventRequest.EventId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return Unauthorized();
+
+            await cancelUserFromEventUseCase.ExecuteAsync(Guid.Parse(userId), request.EventId);
             return Ok();
+        }
+
+        [Authorize(Policy = "UserOnly")]
+        [HttpGet("me/events")]
+        public async Task<IActionResult> GetMyEvents()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return Unauthorized();
+
+            var events = await getUserEventsUseCase.ExecuteAsync(Guid.Parse(userId));
+            return Ok(events);
         }
     }
 }

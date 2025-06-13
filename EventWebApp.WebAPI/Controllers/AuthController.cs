@@ -15,7 +15,11 @@ namespace EventWebApp.WebAPI.Controllers
         private readonly IUserRepository userRepository;
         private readonly IConfiguration configuration;
 
-        public AuthController(ITokenService tokenService, IUserRepository userRepository, IConfiguration configuration)
+        public AuthController(
+            ITokenService tokenService,
+            IUserRepository userRepository,
+            IConfiguration configuration
+        )
         {
             this.tokenService = tokenService;
             this.userRepository = userRepository;
@@ -26,29 +30,42 @@ namespace EventWebApp.WebAPI.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await userRepository.GetByEmailAsync(request.Email);
-
             if (user == null)
             {
-                user = new User
-                {
-                    Id = Guid.NewGuid(),
-                    Email = request.Email,
-                    Role = "User"
-                };
-
-                await userRepository.AddAsync(user);
+                return Ok(new { requiresDetails = true, email = request.Email });
             }
 
             var accessToken = tokenService.GenerateAccessToken(user);
             var refreshToken = tokenService.GenerateRefreshToken();
 
-            var response = new AuthResponse
+            return Ok(new AuthResponse { AccessToken = accessToken, RefreshToken = refreshToken });
+        }
+
+        [HttpPost("register-details")]
+        public async Task<IActionResult> RegisterDetails([FromBody] RegisterDetailsRequest request)
+        {
+            var existingUser = await userRepository.GetByEmailAsync(request.Email);
+            if (existingUser != null)
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
+                return BadRequest("User already exists.");
+            }
+
+            var newUser = new User
+            {
+                Email = request.Email,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                DateOfBirth = DateTime.SpecifyKind(request.BirthDate, DateTimeKind.Utc),
+                RegistrationDate = DateTime.UtcNow,
+                Role = string.IsNullOrWhiteSpace(request.Role) ? "User" : request.Role,
             };
 
-            return Ok(response);
+            await userRepository.AddAsync(newUser);
+
+            var accessToken = tokenService.GenerateAccessToken(newUser);
+            var refreshToken = tokenService.GenerateRefreshToken();
+
+            return Ok(new AuthResponse { AccessToken = accessToken, RefreshToken = refreshToken });
         }
 
         [HttpPost("refresh")]
@@ -64,12 +81,9 @@ namespace EventWebApp.WebAPI.Controllers
 
             await userRepository.UpdateRefreshTokenAsync(user.Id, newRefreshToken, expiry);
 
-            return Ok(new AuthResponse
-            {
-                AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken
-            });
+            return Ok(
+                new AuthResponse { AccessToken = newAccessToken, RefreshToken = newRefreshToken }
+            );
         }
-
     }
 }
