@@ -1,5 +1,5 @@
-﻿using FluentValidation;
-using EventWebApp.Application.DTOs;
+﻿using EventWebApp.Application.DTOs;
+using FluentValidation;
 
 namespace EventWebApp.Application.Validators
 {
@@ -7,7 +7,6 @@ namespace EventWebApp.Application.Validators
     {
         public RegisterUserToEventRequestValidator()
         {
-            RuleFor(r => r.UserId).NotEmpty();
             RuleFor(r => r.EventId).NotEmpty();
         }
     }
