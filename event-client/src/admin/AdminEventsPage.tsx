@@ -1,68 +1,116 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
-import { Modal, Button } from 'react-bootstrap';
+import api from '../api/axios';
+import EventForm from './EventForm';
 
-type EventDto = {
+export type EventDto = {
     id: string;
     title: string;
+    description: string;
     dateTime: string;
+    location: string;
+    category: string;
+    maxParticipants: number;
+    imageUrl: string;
 };
 
 export default function AdminEventsPage() {
-    const { token } = useAuth();
     const [events, setEvents] = useState<EventDto[]>([]);
-    const [showModal, setShowModal] = useState(false);
-    const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [showForm, setShowForm] = useState(false);
+    const [editEvent, setEditEvent] = useState<EventDto | null>(null);
+
+    const fetchEvents = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/events');
+            setEvents(res.data);
+        } catch (e: any) {
+            setError(e.response?.data?.message || 'Ошибка загрузки');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        axios.get('http://localhost:5114/api/events', {
-            headers: { Authorization: `Bearer ${token}` }
-        }).then(res => setEvents(res.data));
-    }, [token]);
+        fetchEvents();
+    }, []);
 
     const handleDelete = async (id: string) => {
-        setEventToDelete(id);
-        setShowModal(true);
+        if (!window.confirm('Удалить событие?')) return;
+        try {
+            await api.delete(`/events/${id}`);
+            setEvents(events => events.filter(e => e.id !== id));
+        } catch (e: any) {
+            setError(e.response?.data?.message || 'Ошибка удаления');
+        }
     };
 
-    const confirmDelete = async () => {
-        if (!eventToDelete) return;
-        await axios.delete(`http://localhost:5114/api/events/${eventToDelete}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        setEvents(events => events.filter(e => e.id !== eventToDelete));
-        setShowModal(false);
-        setEventToDelete(null);
+    const handleEdit = (event: EventDto) => {
+        setEditEvent(event);
+        setShowForm(true);
     };
+
+    const handleCreate = () => {
+        setEditEvent(null);
+        setShowForm(true);
+    };
+
+    const handleFormSubmit = async (data: any) => {
+        try {
+            if (editEvent) {
+                await api.put('/events', { ...data, id: editEvent.id });
+            } else {
+                await api.post('/events', data);
+            }
+            setShowForm(false);
+            fetchEvents();
+        } catch (e: any) {
+            setError(e.response?.data?.message || 'Ошибка сохранения');
+        }
+    };
+
+    if (loading) return <div>Загрузка...</div>;
+    if (error) return <div className="alert alert-danger">{error}</div>;
 
     return (
         <div className="container mt-4">
-            <h2>Админ-панель: события</h2>
-            <Link to="/admin/events/create" className="btn btn-success mb-3">Создать новое</Link>
-            <ul className="list-group">
-                {events.map(e => (
-                    <li key={e.id} className="list-group-item d-flex justify-content-between align-items-center">
-                        {e.title} — {new Date(e.dateTime).toLocaleString()}
-                        <div>
-                            <Link to={`/admin/events/edit/${e.id}`} className="btn btn-sm btn-outline-primary me-2">Редактировать</Link>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(e.id)}>Удалить</button>
-                        </div>
-                    </li>
-                ))}
-            </ul>
-
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Подтверждение удаления</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>Вы уверены, что хотите удалить это событие?</Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>Отмена</Button>
-                    <Button variant="danger" onClick={confirmDelete}>Удалить</Button>
-                </Modal.Footer>
-            </Modal>
+            <h2>Управление событиями</h2>
+            <button className="btn btn-success mb-3" onClick={handleCreate}>Создать событие</button>
+            {showForm && (
+                <EventForm
+                    initialData={editEvent || undefined}
+                    onSubmit={handleFormSubmit}
+                    buttonText={editEvent ? 'Сохранить' : 'Создать'}
+                />
+            )}
+            <table className="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Дата</th>
+                        <th>Место</th>
+                        <th>Категория</th>
+                        <th>Макс. участников</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {events.map(ev => (
+                        <tr key={ev.id}>
+                            <td>{ev.title}</td>
+                            <td>{new Date(ev.dateTime).toLocaleString()}</td>
+                            <td>{ev.location}</td>
+                            <td>{ev.category}</td>
+                            <td>{ev.maxParticipants}</td>
+                            <td>
+                                <button className="btn btn-primary btn-sm me-2" onClick={() => handleEdit(ev)}>Редактировать</button>
+                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(ev.id)}>Удалить</button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 }

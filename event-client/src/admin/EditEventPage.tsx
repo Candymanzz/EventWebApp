@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios';
 import { useAuth } from '../auth/AuthProvider';
 import EventForm from './EventForm';
 
@@ -22,7 +22,7 @@ export default function EditEventPage() {
     const [initialData, setInitialData] = useState<EventFormData | null>(null);
 
     useEffect(() => {
-        axios.get(`http://localhost:5114/api/events/${id}`, {
+        api.get(`/events/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             const e = res.data;
@@ -40,7 +40,7 @@ export default function EditEventPage() {
 
     const handleUpdate = async (data: EventFormData) => {
         try {
-            await axios.put(`http://localhost:5114/api/events/${id}`, data, {
+            await api.put(`/events/${id}`, data, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             navigate('/admin/events');

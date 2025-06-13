@@ -1,6 +1,6 @@
 import EventForm from './EventForm';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios';
 import { useAuth } from '../auth/AuthProvider';
 
 export default function CreateEventPage() {
@@ -9,7 +9,7 @@ export default function CreateEventPage() {
 
     const handleCreate = async (data: any) => {
         try {
-            await axios.post('http://localhost:5114/api/events', data, {
+            await api.post('/events', data, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             navigate('/admin/events');
