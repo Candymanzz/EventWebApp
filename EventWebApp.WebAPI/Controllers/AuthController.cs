@@ -50,6 +50,7 @@ namespace EventWebApp.WebAPI.Controllers
                 return BadRequest("User already exists.");
             }
 
+            var refreshToken = tokenService.GenerateRefreshToken();
             var newUser = new User
             {
                 Email = request.Email,
@@ -58,12 +59,15 @@ namespace EventWebApp.WebAPI.Controllers
                 DateOfBirth = DateTime.SpecifyKind(request.BirthDate, DateTimeKind.Utc),
                 RegistrationDate = DateTime.UtcNow,
                 Role = string.IsNullOrWhiteSpace(request.Role) ? "User" : request.Role,
+                RefreshToken = refreshToken,
+                RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(
+                    int.Parse(configuration["Jwt:RefreshTokenDays"]!)
+                ),
             };
 
             await userRepository.AddAsync(newUser);
 
             var accessToken = tokenService.GenerateAccessToken(newUser);
-            var refreshToken = tokenService.GenerateRefreshToken();
 
             return Ok(new AuthResponse { AccessToken = accessToken, RefreshToken = refreshToken });
         }
