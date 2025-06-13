@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
+import api from '../api/axios';
 
 type EventDto = {
     id: string;
@@ -10,37 +10,45 @@ type EventDto = {
     location: string;
     category: string;
     maxParticipants: number;
-    usersCount: number;
+    currentParticipantsCount: number;
     imageUrl: string;
     isUserRegistered: boolean;
 };
 
 export default function EventDetailPage() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [event, setEvent] = useState<EventDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [registered, setRegistered] = useState(false);
 
+    const fetchEvent = async () => {
+        try {
+            const res = await api.get(`/events/${id}`);
+            setEvent(res.data);
+            setRegistered(res.data.isUserRegistered || false);
+        } catch (err) {
+            console.error('Ошибка при загрузке события', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        axios.get(`http://localhost:5114/api/events/${id}`)
-            .then(res => {
-                setEvent(res.data);
-                setRegistered(res.data.isUserRegistered || false);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error('Ошибка при загрузке события', err);
-                setLoading(false);
-            });
+        fetchEvent();
     }, [id]);
 
     const handleRegister = async () => {
         try {
-            await axios.post(`http://localhost:5114/api/events/${id}/register`);
+            await api.post(`/users/register-to-event`, { EventId: id });
             setRegistered(true);
-            setEvent((prev) => prev ? { ...prev, usersCount: prev.usersCount + 1 } : prev);
-        } catch (err) {
+            setEvent((prev) => prev ? { ...prev, currentParticipantsCount: prev.currentParticipantsCount + 1 } : prev);
+            navigate('/my-events', { replace: true });
+        } catch (err: any) {
             console.error('Ошибка при регистрации на событие', err);
+            const errorMessage = err.response?.data?.message || 'Произошла ошибка при регистрации на событие';
+            alert(errorMessage);
+            fetchEvent();
         }
     };
 
@@ -62,11 +70,11 @@ export default function EventDetailPage() {
             <p><strong>Дата и время:</strong> {new Date(event.dateTime).toLocaleString()}</p>
             <p><strong>Место:</strong> {event.location}</p>
             <p><strong>Категория:</strong> {event.category}</p>
-            <p><strong>Участники:</strong> {event.usersCount} / {event.maxParticipants}</p>
+            <p><strong>Участники:</strong> {event.currentParticipantsCount} / {event.maxParticipants}</p>
 
             {registered ? (
                 <div className="alert alert-success">Вы зарегистрированы на это событие</div>
-            ) : event.usersCount >= event.maxParticipants ? (
+            ) : event.currentParticipantsCount >= event.maxParticipants ? (
                 <div className="alert alert-danger">Мест больше нет</div>
             ) : (
                 <button onClick={handleRegister} className="btn btn-primary">Записаться</button>

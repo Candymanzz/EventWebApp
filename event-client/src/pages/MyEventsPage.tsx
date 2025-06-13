@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useLocation } from 'react-router-dom';
+import api from '../api/axios';
 import { useAuth } from '../auth/AuthProvider';
 
 type EventDto = {
@@ -11,22 +12,37 @@ type EventDto = {
 
 export default function MyEventsPage() {
     const { token } = useAuth();
+    const location = useLocation();
     const [events, setEvents] = useState<EventDto[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        axios.get('http://localhost:5114/api/users/me/events', {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                setEvents(res.data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error('Ошибка загрузки', err);
-                setLoading(false);
+    const fetchEvents = async () => {
+        try {
+            const res = await api.get('/users/me/events', {
+                headers: { Authorization: `Bearer ${token}` }
             });
-    }, [token]);
+            setEvents(res.data);
+        } catch (err) {
+            console.error('Ошибка загрузки', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCancel = async (eventId: string) => {
+        try {
+            await api.post('/users/cancel-from-event', { EventId: eventId });
+            alert('Вы отменили участие в событии');
+            fetchEvents();
+        } catch (error) {
+            console.error('Ошибка отмены регистрации', error);
+            alert('Ошибка при отмене участия');
+        }
+    };
+
+    useEffect(() => {
+        fetchEvents();
+    }, [token, location.key]);
 
     if (loading) return <div className="container mt-5">Загрузка...</div>;
 
@@ -44,6 +60,7 @@ export default function MyEventsPage() {
                                 {new Date(e.dateTime).toLocaleString()} — {e.location}
                             </span>
                             <a href={`/events/${e.id}`} className="btn btn-sm btn-outline-primary">Подробнее</a>
+                            <button onClick={() => handleCancel(e.id)} className="btn btn-sm btn-outline-danger">Отменить</button>
                         </li>
                     ))}
                 </ul>
