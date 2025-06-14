@@ -19,6 +19,10 @@ cd EventWebApp
 ```bash
 docker-compose up -d
 ```
+3. Применить миграции для базы данных
+```bash
+docker-compose exec backend dotnet ef database update --project ../EventWebApp.Infrastructure --startup-project . --context AppDbContext
+```
 
 Приложение будет доступно по следующим адресам:
 - Фронтенд: http://localhost:3000
