@@ -63,10 +63,10 @@ namespace EventWebApp.WebAPI
       // === JWT Authentication ===
       builder.Services.AddScoped<ITokenService, TokenService>();
 
-      var jwtConfig = builder.Configuration.GetSection("Jwt");
-      var jwtKey = jwtConfig["Key"];
+      var jwtConfig = builder.Configuration.GetSection("JwtSettings");
+      var jwtKey = jwtConfig["Secret"];
       if (string.IsNullOrWhiteSpace(jwtKey))
-        throw new InvalidOperationException("JWT Key is not configured.");
+        throw new InvalidOperationException("JWT Secret is not configured.");
 
       var key = Encoding.UTF8.GetBytes(jwtKey);
 
