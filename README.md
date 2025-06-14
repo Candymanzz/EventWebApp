@@ -11,7 +11,7 @@
 
 1. Клонируйте репозиторий:
 ```bash
-git clone <[url-репозитория](https://github.com/Candymanzz/EventWebApp)>
+git clone https://github.com/Candymanzz/EventWebApp
 cd EventWebApp
 ```
 
