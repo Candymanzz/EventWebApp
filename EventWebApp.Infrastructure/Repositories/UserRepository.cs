@@ -1,4 +1,5 @@
-﻿using EventWebApp.Application.Interfaces;
+﻿using EventWebApp.Application.Exceptions;
+using EventWebApp.Application.Interfaces;
 using EventWebApp.Core.Model;
 using EventWebApp.Infrastructure.Date;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +32,7 @@ namespace EventWebApp.Infrastructure.Repositories
 
             if (_event == null || user == null)
             {
-                throw new InvalidOperationException("User or Event not found.");
+                throw new NotFoundException("User or Event not found.", ErrorCodes.NotFound);
             }
 
             if (_event.Users.Contains(user))
@@ -69,18 +70,22 @@ namespace EventWebApp.Infrastructure.Repositories
 
             if (_event == null || user == null)
             {
-                throw new InvalidOperationException("User or Event not found.");
+                throw new NotFoundException("User or Event not found.", ErrorCodes.NotFound);
             }
 
             if (_event.Users.Contains(user))
             {
-                throw new InvalidOperationException("User is already registered for this event.");
+                throw new AlreadyExistsException(
+                    "User is already registered for this event.",
+                    ErrorCodes.UserAlreadyRegisteredForEvent
+                );
             }
 
             if (_event.Users.Count >= _event.MaxParticipants)
             {
-                throw new InvalidOperationException(
-                    "Event has reached maximum number of participants."
+                throw new ConflictException(
+                    "Event has reached maximum number of participants.",
+                    ErrorCodes.EventFull
                 );
             }
 
@@ -108,8 +113,7 @@ namespace EventWebApp.Infrastructure.Repositories
             var user = await appDbContext.Users.FindAsync(userId);
             if (user is null)
             {
-                //throw new InvalidOperationException("User not found.");
-                return;
+                throw new NotFoundException("User not found.", ErrorCodes.UserNotFound);
             }
 
             user.RefreshToken = refreshToken;

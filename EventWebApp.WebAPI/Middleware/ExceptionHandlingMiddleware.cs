@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using EventWebApp.Application.Exceptions;
 using FluentValidation;
 
 namespace EventWebApp.WebAPI.Middleware
@@ -38,6 +39,60 @@ namespace EventWebApp.WebAPI.Middleware
                         error = e.ErrorMessage,
                     }),
                 };
+
+                await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
+            }
+            catch (NotFoundException ex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                context.Response.ContentType = "application/json";
+
+                var errorResponse = new { message = ex.Message, errorCode = ex.ErrorCode };
+
+                await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
+            }
+            catch (BadRequestException ex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                context.Response.ContentType = "application/json";
+
+                var errorResponse = new { message = ex.Message, errorCode = ex.ErrorCode };
+
+                await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
+            }
+            catch (AlreadyExistsException ex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                context.Response.ContentType = "application/json";
+
+                var errorResponse = new { message = ex.Message, errorCode = ex.ErrorCode };
+
+                await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
+            }
+            catch (ConflictException ex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                context.Response.ContentType = "application/json";
+
+                var errorResponse = new { message = ex.Message, errorCode = ex.ErrorCode };
+
+                await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
+            }
+            catch (UnauthorizedException ex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                context.Response.ContentType = "application/json";
+
+                var errorResponse = new { message = ex.Message, errorCode = ex.ErrorCode };
+
+                await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
+            }
+            catch (ForbiddenException ex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                context.Response.ContentType = "application/json";
+
+                var errorResponse = new { message = ex.Message, errorCode = ex.ErrorCode };
 
                 await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
             }

@@ -1,4 +1,5 @@
 ﻿using EventWebApp.Application.DTOs;
+using EventWebApp.Application.Exceptions;
 using EventWebApp.Application.Interfaces;
 using EventWebApp.Core.Model;
 using EventWebApp.Infrastructure.Date;
@@ -103,7 +104,7 @@ namespace EventWebApp.Infrastructure.Repositories
             var ev = await appDbContext.Events.FindAsync(id);
             if (ev == null)
             {
-                throw new InvalidOperationException("Event not found");
+                throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
             }
 
             ev.ImageUrl = imageUrl;

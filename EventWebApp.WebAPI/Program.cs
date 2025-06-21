@@ -1,4 +1,5 @@
 using System.Text;
+using EventWebApp.Application.Exceptions;
 using EventWebApp.Application.Interfaces;
 using EventWebApp.Application.Mappings;
 using EventWebApp.Application.UseCases.Event;
@@ -67,7 +68,10 @@ namespace EventWebApp.WebAPI
             var jwtKey = jwtConfig["Secret"];
             if (string.IsNullOrWhiteSpace(jwtKey))
             {
-                throw new InvalidOperationException("JWT Secret is not configured.");
+                throw new BadRequestException(
+                    "JWT Secret is not configured.",
+                    ErrorCodes.JwtSecretNotConfigured
+                );
             }
 
             var key = Encoding.UTF8.GetBytes(jwtKey);

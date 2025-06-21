@@ -1,4 +1,5 @@
-﻿using EventWebApp.Application.Interfaces;
+﻿using EventWebApp.Application.Exceptions;
+using EventWebApp.Application.Interfaces;
 
 namespace EventWebApp.Application.UseCases.User
 {
@@ -23,12 +24,15 @@ namespace EventWebApp.Application.UseCases.User
 
             if (user == null || ev == null)
             {
-                throw new Exception("Пользователь или событие не найдено");
+                throw new NotFoundException("The user or event was not found", ErrorCodes.NotFound);
             }
 
             if (!ev.Users.Any(u => u.Id == userId))
             {
-                throw new Exception("Пользователь не зарегистрирован на событие");
+                throw new BadRequestException(
+                    "User is not registered for this event",
+                    ErrorCodes.UserNotRegisteredForEvent
+                );
             }
 
             ev.Users.Remove(user);
