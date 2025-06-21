@@ -9,7 +9,7 @@ namespace EventWebApp.Application.UseCases.User
         private readonly IUserRepository userRepository;
         private readonly IMapper mapper;
 
-        public GetUserByIdUseCase (IUserRepository userRepository, IMapper mapper)
+        public GetUserByIdUseCase(IUserRepository userRepository, IMapper mapper)
         {
             this.userRepository = userRepository;
             this.mapper = mapper;

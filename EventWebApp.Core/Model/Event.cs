@@ -35,7 +35,7 @@ namespace EventWebApp.Core.Model
         [Range(1, int.MaxValue, ErrorMessage = "Maximum participants must be at least 1")]
         public int MaxParticipants { get; set; }
 
-        public virtual ICollection<User> Users { get; set; } = new HashSet<User>(); //че надо??
+        public virtual ICollection<User> Users { get; set; } = new HashSet<User>();
 
         [Url]
         public string ImageUrl { get; set; } = string.Empty;

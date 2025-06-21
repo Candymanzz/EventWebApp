@@ -10,11 +10,12 @@ namespace EventWebApp.Application.UseCases.User
         private readonly IUserRepository userRepository;
         private readonly IMapper mapper;
         private readonly IValidator<UserRegistrationRequest> validator;
-        
+
         public RegisterUserUseCase(
             IUserRepository userRepository,
             IMapper mapper,
-            IValidator<UserRegistrationRequest> validator)
+            IValidator<UserRegistrationRequest> validator
+        )
         {
             this.userRepository = userRepository;
             this.mapper = mapper;

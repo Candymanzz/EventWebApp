@@ -28,7 +28,7 @@ namespace EventWebApp.Core.Model
         [Required]
         [EmailAddress]
         [StringLength(200)]
-        public string Email { get; set; } = string.Empty; // Unique!!
+        public string Email { get; set; } = string.Empty;
 
         public ICollection<Event> Events { get; set; } = new List<Event>();
 

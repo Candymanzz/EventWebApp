@@ -1,12 +1,11 @@
-﻿
-using EventWebApp.Application.DTOs;
+﻿using EventWebApp.Application.DTOs;
 using FluentValidation;
 
 namespace EventWebApp.Application.Validators
 {
     public class CreateEventRequestValidator : AbstractValidator<CreateEventRequest>
     {
-        public CreateEventRequestValidator() 
+        public CreateEventRequestValidator()
         {
             RuleFor(e => e.Title).NotEmpty().MaximumLength(100);
             RuleFor(e => e.Description).NotEmpty();

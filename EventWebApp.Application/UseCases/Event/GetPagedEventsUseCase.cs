@@ -22,7 +22,7 @@ public class GetPagedEventsUseCase
             Items = mapper.Map<IEnumerable<EventDto>>(result.Items),
             TotalCount = result.TotalCount,
             PageNumber = result.PageNumber,
-            PageSize = result.PageSize
+            PageSize = result.PageSize,
         };
     }
 }

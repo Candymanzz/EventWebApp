@@ -9,7 +9,7 @@ namespace EventWebApp.Application.UseCases.Event
         private readonly IEventRepository eventRepository;
         private readonly IMapper mapper;
 
-        public GetEventByIdUseCase (IEventRepository eventRepository, IMapper mapper)
+        public GetEventByIdUseCase(IEventRepository eventRepository, IMapper mapper)
         {
             this.eventRepository = eventRepository;
             this.mapper = mapper;
@@ -19,6 +19,6 @@ namespace EventWebApp.Application.UseCases.Event
         {
             var ev = await eventRepository.GetByIdAsync(id);
             return ev == null ? null : mapper.Map<EventDto>(ev);
-        } 
+        }
     }
 }

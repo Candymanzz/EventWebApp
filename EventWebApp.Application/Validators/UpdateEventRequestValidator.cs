@@ -1,5 +1,5 @@
-﻿using FluentValidation;
-using EventWebApp.Application.DTOs;
+﻿using EventWebApp.Application.DTOs;
+using FluentValidation;
 
 namespace EventWebApp.Application.Validators
 {
@@ -10,7 +10,9 @@ namespace EventWebApp.Application.Validators
             RuleFor(e => e.Id).NotEmpty();
             RuleFor(e => e.Title).NotEmpty().MaximumLength(100);
             RuleFor(e => e.Description).NotEmpty();
-            RuleFor(e => e.DateTime).GreaterThan(DateTime.UtcNow).WithMessage("Date must be in the future");
+            RuleFor(e => e.DateTime)
+                .GreaterThan(DateTime.UtcNow)
+                .WithMessage("Date must be in the future");
             RuleFor(e => e.Location).NotEmpty().MaximumLength(200);
             RuleFor(e => e.Category).NotEmpty().MaximumLength(100);
             RuleFor(e => e.MaxParticipants).GreaterThan(0);

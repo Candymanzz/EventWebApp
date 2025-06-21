@@ -15,144 +15,155 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace EventWebApp.WebAPI
 {
-  class Program
-  {
-    public static void Main(string[] args)
+    class Program
     {
-      var builder = WebApplication.CreateBuilder(args);
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-      // === Database ===
-      builder.Services.AddDbContext<AppDbContext>(options =>
-          options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-      );
+            // === Database ===
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+            );
 
-      // === Repositories ===
-      builder.Services.AddScoped<IEventRepository, EventRepository>();
-      builder.Services.AddScoped<IUserRepository, UserRepository>();
+            // === Repositories ===
+            builder.Services.AddScoped<IEventRepository, EventRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-      // === Validators ===
-      builder.Services.AddValidatorsFromAssemblyContaining<CreateEventRequestValidator>();
-      builder.Services.AddValidatorsFromAssemblyContaining<UpdateEventRequestValidator>();
-      builder.Services.AddValidatorsFromAssemblyContaining<UserRegistrationRequestValidator>();
-      builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserToEventRequestValidator>();
+            // === Validators ===
+            builder.Services.AddValidatorsFromAssemblyContaining<CreateEventRequestValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<UpdateEventRequestValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<UserRegistrationRequestValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserToEventRequestValidator>();
 
-      // === AutoMapper ===
-      builder.Services.AddAutoMapper(typeof(MappingProfile));
+            // === AutoMapper ===
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-      // === Use Cases ===
-      builder.Services.AddScoped<CreateEventUseCase>();
-      builder.Services.AddScoped<DeleteEventUseCase>();
-      builder.Services.AddScoped<FilterEventsUseCase>();
-      builder.Services.AddScoped<GetAllEventsUseCase>();
-      builder.Services.AddScoped<GetEventByIdUseCase>();
-      builder.Services.AddScoped<GetByTitleUseCase>();
-      builder.Services.AddScoped<UpdateEventUseCase>();
-      builder.Services.AddScoped<UploadEventImageUseCase>();
-      builder.Services.AddScoped<GetPagedEventsUseCase>();
-      builder.Services.AddScoped<CancelUserFromEventUseCase>();
-      builder.Services.AddScoped<GetUserByIdUseCase>();
-      builder.Services.AddScoped<GetUsersByEventUseCase>();
-      builder.Services.AddScoped<RegisterUserToEventUseCase>();
-      builder.Services.AddScoped<RegisterUserUseCase>();
-      builder.Services.AddScoped<GetUserEventsUseCase>();
+            // === Use Cases ===
+            builder.Services.AddScoped<CreateEventUseCase>();
+            builder.Services.AddScoped<DeleteEventUseCase>();
+            builder.Services.AddScoped<FilterEventsUseCase>();
+            builder.Services.AddScoped<GetAllEventsUseCase>();
+            builder.Services.AddScoped<GetEventByIdUseCase>();
+            builder.Services.AddScoped<GetByTitleUseCase>();
+            builder.Services.AddScoped<UpdateEventUseCase>();
+            builder.Services.AddScoped<UploadEventImageUseCase>();
+            builder.Services.AddScoped<GetPagedEventsUseCase>();
+            builder.Services.AddScoped<CancelUserFromEventUseCase>();
+            builder.Services.AddScoped<GetUserByIdUseCase>();
+            builder.Services.AddScoped<GetUsersByEventUseCase>();
+            builder.Services.AddScoped<RegisterUserToEventUseCase>();
+            builder.Services.AddScoped<RegisterUserUseCase>();
+            builder.Services.AddScoped<GetUserEventsUseCase>();
 
-      // === Email Notification ===
-      builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
-      builder.Services.AddScoped<INotificationService, EmailNotificationService>();
+            // === Email Notification ===
+            builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+            builder.Services.AddScoped<INotificationService, EmailNotificationService>();
 
-      // === JWT Authentication ===
-      builder.Services.AddScoped<ITokenService, TokenService>();
+            // === JWT Authentication ===
+            builder.Services.AddScoped<ITokenService, TokenService>();
 
-      var jwtConfig = builder.Configuration.GetSection("JwtSettings");
-      var jwtKey = jwtConfig["Secret"];
-      if (string.IsNullOrWhiteSpace(jwtKey))
-        throw new InvalidOperationException("JWT Secret is not configured.");
-
-      var key = Encoding.UTF8.GetBytes(jwtKey);
-
-      builder.Services
-          .AddAuthentication(options =>
-          {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-          })
-          .AddJwtBearer(opt =>
-          {
-            opt.RequireHttpsMetadata = false;
-            opt.SaveToken = true;
-            opt.TokenValidationParameters = new TokenValidationParameters
+            var jwtConfig = builder.Configuration.GetSection("JwtSettings");
+            var jwtKey = jwtConfig["Secret"];
+            if (string.IsNullOrWhiteSpace(jwtKey))
             {
-              ValidateIssuer = true,
-              ValidIssuer = jwtConfig["Issuer"],
-              ValidateAudience = true,
-              ValidAudience = jwtConfig["Audience"],
-              ValidateLifetime = true,
-              ValidateIssuerSigningKey = true,
-              IssuerSigningKey = new SymmetricSecurityKey(key),
-            };
-          });
+                throw new InvalidOperationException("JWT Secret is not configured.");
+            }
 
-      builder.Services.AddAuthorization(options =>
-      {
-        options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-        options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
-      });
+            var key = Encoding.UTF8.GetBytes(jwtKey);
 
-      builder.Services.AddEndpointsApiExplorer();
-      builder.Services.AddSwaggerGen();
+            builder
+                .Services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(opt =>
+                {
+                    opt.RequireHttpsMetadata = false;
+                    opt.SaveToken = true;
+                    opt.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = jwtConfig["Issuer"],
+                        ValidateAudience = true,
+                        ValidAudience = jwtConfig["Audience"],
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                    };
+                });
 
-      builder.Services.AddCors(options =>
-      {
-        options.AddPolicy("AllowFrontend", policy =>
-              {
-                policy.WithOrigins("http://localhost:3000")
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+            });
+
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(
+                    "AllowFrontend",
+                    policy =>
+                    {
+                        policy
+                            .WithOrigins("http://localhost:3000")
                             .AllowAnyHeader()
                             .AllowAnyMethod();
-              });
-      });
+                    }
+                );
+            });
 
-      // === Controllers & Razor ===
-      builder.Services.AddRazorPages();
-      builder.Services.AddControllers();
+            // === Controllers & Razor ===
+            builder.Services.AddRazorPages();
+            builder.Services.AddControllers();
 
-      var app = builder.Build();
+            var app = builder.Build();
 
-      // === Middleware ===
-      app.UseCors("AllowFrontend");
+            // === Middleware ===
+            app.UseCors("AllowFrontend");
 
-      app.UseMiddleware<Middleware.ExceptionHandlingMiddleware>();
+            app.UseMiddleware<Middleware.ExceptionHandlingMiddleware>();
 
-      app.UseStaticFiles(new StaticFileOptions
-      {
-        OnPrepareResponse = ctx =>
-        {
-          ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=604800");
+            app.UseStaticFiles(
+                new StaticFileOptions
+                {
+                    OnPrepareResponse = ctx =>
+                    {
+                        ctx.Context.Response.Headers.Append(
+                            "Cache-Control",
+                            "public, max-age=604800"
+                        );
+                    },
+                }
+            );
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
+
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler("/Error");
+                app.UseHsts();
+            }
+
+            app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.MapControllers();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                dbContext.Database.Migrate();
+            }
+
+            app.Run();
         }
-      });
-
-      app.UseSwagger();
-      app.UseSwaggerUI();
-
-      if (!app.Environment.IsDevelopment())
-      {
-        app.UseExceptionHandler("/Error");
-        app.UseHsts();
-      }
-
-      app.UseHttpsRedirection();
-      app.UseRouting();
-      app.UseAuthentication();
-      app.UseAuthorization();
-
-      app.MapControllers();
-
-      using (var scope = app.Services.CreateScope())
-      {
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        dbContext.Database.Migrate();
-      }
-
-      app.Run();
     }
-  }
 }

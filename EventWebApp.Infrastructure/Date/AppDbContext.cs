@@ -9,7 +9,8 @@ namespace EventWebApp.Infrastructure.Date
         public DbSet<Event> Events { get; set; }
         public DbSet<User> Users { get; set; }
 
-        public AppDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) { }
+        public AppDbContext(DbContextOptions dbContextOptions)
+            : base(dbContextOptions) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

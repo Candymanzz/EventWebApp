@@ -6,7 +6,7 @@ namespace EventWebApp.Application.UseCases.Event
     {
         private readonly IEventRepository eventRepository;
 
-        public DeleteEventUseCase (IEventRepository eventRepository)
+        public DeleteEventUseCase(IEventRepository eventRepository)
         {
             this.eventRepository = eventRepository;
         }
