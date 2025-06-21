@@ -66,7 +66,9 @@ namespace EventWebApp.WebAPI.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
+            {
                 return Unauthorized();
+            }
 
             await registerUserToEventUseCase.ExecuteAsync(Guid.Parse(userId), request.EventId);
             return Ok();
@@ -80,7 +82,9 @@ namespace EventWebApp.WebAPI.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
+            {
                 return Unauthorized();
+            }
 
             await cancelUserFromEventUseCase.ExecuteAsync(Guid.Parse(userId), request.EventId);
             return Ok();
@@ -92,7 +96,9 @@ namespace EventWebApp.WebAPI.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
+            {
                 return Unauthorized();
+            }
 
             var events = await getUserEventsUseCase.ExecuteAsync(Guid.Parse(userId));
             return Ok(events);

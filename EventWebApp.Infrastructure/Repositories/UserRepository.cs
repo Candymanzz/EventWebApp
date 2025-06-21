@@ -107,7 +107,10 @@ namespace EventWebApp.Infrastructure.Repositories
         {
             var user = await appDbContext.Users.FindAsync(userId);
             if (user is null)
+            {
+                //throw new InvalidOperationException("User not found.");
                 return;
+            }
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = expiry;

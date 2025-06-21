@@ -22,10 +22,14 @@ namespace EventWebApp.Application.UseCases.User
             var ev = await eventRepository.GetByIdAsync(eventId);
 
             if (user == null || ev == null)
+            {
                 throw new Exception("Пользователь или событие не найдено");
+            }
 
             if (!ev.Users.Any(u => u.Id == userId))
+            {
                 throw new Exception("Пользователь не зарегистрирован на событие");
+            }
 
             ev.Users.Remove(user);
             await eventRepository.UpdateAsync(ev);

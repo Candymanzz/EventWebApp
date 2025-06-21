@@ -119,7 +119,9 @@ namespace EventWebApp.WebAPI.Controllers
         public async Task<IActionResult> UploadImage(Guid id, IFormFile file)
         {
             if (file == null || file.Length == 0)
+            {
                 return BadRequest("No file uploaded");
+            }
 
             var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var path = Path.Combine("wwwroot", "images", "events", fileName);
