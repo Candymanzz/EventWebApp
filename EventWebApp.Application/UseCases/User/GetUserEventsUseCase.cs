@@ -1,7 +1,6 @@
 using AutoMapper;
 using EventWebApp.Application.DTOs;
 using EventWebApp.Application.Interfaces;
-using EventWebApp.Core.Model;
 
 namespace EventWebApp.Application.UseCases.User
 {

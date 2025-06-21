@@ -3,7 +3,6 @@ using EventWebApp.Application.Interfaces;
 using EventWebApp.Core.Model;
 using EventWebApp.Infrastructure.Date;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace EventWebApp.Infrastructure.Repositories
 {
@@ -103,7 +102,9 @@ namespace EventWebApp.Infrastructure.Repositories
         {
             var ev = await appDbContext.Events.FindAsync(id);
             if (ev == null)
+            {
                 throw new InvalidOperationException("Event not found");
+            }
 
             ev.ImageUrl = imageUrl;
             await appDbContext.SaveChangesAsync();

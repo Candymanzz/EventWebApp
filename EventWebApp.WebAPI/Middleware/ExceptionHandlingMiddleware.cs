@@ -1,6 +1,6 @@
-﻿using FluentValidation;
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
+using FluentValidation;
 
 namespace EventWebApp.WebAPI.Middleware
 {
@@ -9,7 +9,10 @@ namespace EventWebApp.WebAPI.Middleware
         private readonly RequestDelegate requestDelegate;
         private readonly ILogger<ExceptionHandlingMiddleware> logger;
 
-        public ExceptionHandlingMiddleware(RequestDelegate requestDelegate, ILogger<ExceptionHandlingMiddleware> logger)
+        public ExceptionHandlingMiddleware(
+            RequestDelegate requestDelegate,
+            ILogger<ExceptionHandlingMiddleware> logger
+        )
         {
             this.requestDelegate = requestDelegate;
             this.logger = logger;
@@ -29,7 +32,11 @@ namespace EventWebApp.WebAPI.Middleware
                 var errorResponse = new
                 {
                     message = "Validation failed",
-                    errors = ex.Errors.Select(e => new { field = e.PropertyName, error = e.ErrorMessage })
+                    errors = ex.Errors.Select(e => new
+                    {
+                        field = e.PropertyName,
+                        error = e.ErrorMessage,
+                    }),
                 };
 
                 await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
@@ -39,10 +46,9 @@ namespace EventWebApp.WebAPI.Middleware
                 context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                 context.Response.ContentType = "application/json";
 
-                await context.Response.WriteAsync(JsonSerializer.Serialize(new
-                {
-                    message = ex.Message
-                }));
+                await context.Response.WriteAsync(
+                    JsonSerializer.Serialize(new { message = ex.Message })
+                );
             }
             catch (Exception ex)
             {
@@ -51,10 +57,9 @@ namespace EventWebApp.WebAPI.Middleware
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 context.Response.ContentType = "application/json";
 
-                await context.Response.WriteAsync(JsonSerializer.Serialize(new
-                {
-                    message = "An unexpected error occurred"
-                }));
+                await context.Response.WriteAsync(
+                    JsonSerializer.Serialize(new { message = "An unexpected error occurred" })
+                );
             }
         }
     }
