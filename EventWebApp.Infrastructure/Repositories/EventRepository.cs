@@ -34,7 +34,7 @@ namespace EventWebApp.Infrastructure.Repositories
 
         public async Task<IEnumerable<Event>> GetAllAsync()
         {
-            return await appDbContext.Events.Include(e => e.Users).ToListAsync();
+            return await appDbContext.Events.AsNoTracking().Include(e => e.Users).ToListAsync();
         }
 
         public async Task<IEnumerable<Event>> GetByFiltersAsync(
@@ -44,7 +44,7 @@ namespace EventWebApp.Infrastructure.Repositories
             string? title
         )
         {
-            var query = appDbContext.Events.Include(e => e.Users).AsQueryable();
+            var query = appDbContext.Events.AsNoTracking().Include(e => e.Users).AsQueryable();
 
             if (!string.IsNullOrEmpty(title))
             {
@@ -79,14 +79,16 @@ namespace EventWebApp.Infrastructure.Repositories
         public async Task<Event?> GetByIdAsync(Guid id)
         {
             return await appDbContext
-                .Events.Include(e => e.Users)
+                .Events.AsNoTracking()
+                .Include(e => e.Users)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
         public async Task<IEnumerable<Event>> GetByTitleAsync(string title)
         {
             return await appDbContext
-                .Events.Include(e => e.Users)
+                .Events.AsNoTracking()
+                .Include(e => e.Users)
                 .Where(e => e.Title.ToLower().Contains(title.ToLower()))
                 .ToListAsync();
         }
@@ -109,7 +111,7 @@ namespace EventWebApp.Infrastructure.Repositories
 
         public async Task<PaginatedResult<Event>> GetPagedAsync(int pageNumber, int pageSize)
         {
-            var query = appDbContext.Events.Include(e => e.Users).AsQueryable();
+            var query = appDbContext.Events.AsNoTracking().Include(e => e.Users).AsQueryable();
 
             var total = await query.CountAsync();
 
@@ -127,7 +129,8 @@ namespace EventWebApp.Infrastructure.Repositories
         public async Task<List<Event>> GetEventsByUserIdAsync(Guid userId)
         {
             return await appDbContext
-                .Events.Include(e => e.Users)
+                .Events.AsNoTracking()
+                .Include(e => e.Users)
                 .Where(e => e.Users.Any(u => u.Id == userId))
                 .ToListAsync();
         }
