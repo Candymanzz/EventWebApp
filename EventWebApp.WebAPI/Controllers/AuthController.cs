@@ -1,4 +1,5 @@
-﻿using EventWebApp.Application.DTOs;
+﻿using BCrypt.Net;
+using EventWebApp.Application.DTOs;
 using EventWebApp.Application.Interfaces;
 using EventWebApp.Core.Model;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,11 @@ namespace EventWebApp.WebAPI.Controllers
                 return Ok(new { requiresDetails = true, email = request.Email });
             }
 
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            {
+                return BadRequest("Invalid email or password");
+            }
+
             var accessToken = tokenService.GenerateAccessToken(user);
             var refreshToken = tokenService.GenerateRefreshToken();
 
@@ -51,9 +57,12 @@ namespace EventWebApp.WebAPI.Controllers
             var refreshToken = tokenService.GenerateRefreshToken();
             var refreshTokenDays = configuration.GetValue<int>("JwtSettings:RefreshTokenDays", 7);
 
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
             var newUser = new User
             {
                 Email = request.Email,
+                Password = hashedPassword,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 DateOfBirth = DateTime.SpecifyKind(request.BirthDate, DateTimeKind.Utc),

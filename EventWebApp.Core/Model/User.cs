@@ -30,6 +30,10 @@ namespace EventWebApp.Core.Model
         [StringLength(200)]
         public string Email { get; set; } = string.Empty;
 
+        [Required]
+        [StringLength(255)]
+        public string Password { get; set; } = string.Empty;
+
         public ICollection<Event> Events { get; set; } = new List<Event>();
 
         public string? RefreshToken { get; set; }
