@@ -2,9 +2,9 @@
 
 namespace EventWebApp.Application.Interfaces
 {
-    public interface ITokenService
-    {
-        string GenerateAccessToken(User user);
-        string GenerateRefreshToken();
-    }
+  public interface ITokenService
+  {
+    string GenerateAccessToken(User user);
+    string GenerateRefreshToken();
+  }
 }

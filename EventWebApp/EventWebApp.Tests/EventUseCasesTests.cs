@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using AutoMapper;
 using EventWebApp.Application.DTOs;
-using EventWebApp.Application.Interfaces;
+using EventWebApp.Core.Interfaces;
 using EventWebApp.Application.UseCases.Event;
 using EventWebApp.Core.Model;
 using EventWebApp.Infrastructure.Repositories;

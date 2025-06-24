@@ -1,19 +1,19 @@
-﻿using EventWebApp.Application.Interfaces;
+﻿using EventWebApp.Core.Interfaces;
 
 namespace EventWebApp.Application.UseCases.User
 {
-    public class RegisterUserToEventUseCase
+  public class RegisterUserToEventUseCase
+  {
+    private readonly IUserRepository userRepository;
+
+    public RegisterUserToEventUseCase(IUserRepository userRepository)
     {
-        private readonly IUserRepository userRepository;
-
-        public RegisterUserToEventUseCase(IUserRepository userRepository)
-        {
-            this.userRepository = userRepository;
-        }
-
-        public async Task ExecuteAsync(Guid uId, Guid evId)
-        {
-            await userRepository.RegisterUserToEventAsync(uId, evId);
-        }
+      this.userRepository = userRepository;
     }
+
+    public async Task ExecuteAsync(Guid uId, Guid evId)
+    {
+      await userRepository.RegisterUserToEventAsync(uId, evId);
+    }
+  }
 }

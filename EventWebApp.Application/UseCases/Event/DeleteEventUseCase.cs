@@ -1,4 +1,4 @@
-﻿using EventWebApp.Application.Interfaces;
+﻿using EventWebApp.Core.Interfaces;
 
 namespace EventWebApp.Application.UseCases.Event
 {

@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using EventWebApp.Application.DTOs;
-using EventWebApp.Application.Interfaces;
+using EventWebApp.Core.Interfaces;
 using FluentValidation;
 
 namespace EventWebApp.Application.UseCases.Event
