@@ -61,6 +61,7 @@ namespace EventWebApp.WebAPI
       builder.Services.AddScoped<RegisterUserToEventUseCase>();
       builder.Services.AddScoped<RegisterUserUseCase>();
       builder.Services.AddScoped<GetUserEventsUseCase>();
+      builder.Services.AddScoped<UpdateRefreshTokenUseCase>();
 
       // === Email Notification ===
       builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));

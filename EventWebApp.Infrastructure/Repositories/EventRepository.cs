@@ -1,5 +1,4 @@
-﻿using EventWebApp.Application.Exceptions;
-using EventWebApp.Core.Interfaces;
+﻿using EventWebApp.Core.Interfaces;
 using EventWebApp.Core.Model;
 using EventWebApp.Infrastructure.Date;
 using Microsoft.EntityFrameworkCore;
@@ -98,16 +97,17 @@ namespace EventWebApp.Infrastructure.Repositories
       await appDbContext.SaveChangesAsync();
     }
 
-    public async Task UpdateImageAsync(Guid id, string imageUrl)
+    public async Task<bool> UpdateImageAsync(Guid id, string imageUrl)
     {
       var ev = await appDbContext.Events.FindAsync(id);
       if (ev == null)
       {
-        throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
+        return false;
       }
 
       ev.ImageUrl = imageUrl;
       await appDbContext.SaveChangesAsync();
+      return true;
     }
 
     public async Task<PaginatedResult<Event>> GetPagedAsync(int pageNumber, int pageSize)

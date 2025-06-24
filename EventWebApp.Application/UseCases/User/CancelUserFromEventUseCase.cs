@@ -6,37 +6,19 @@ namespace EventWebApp.Application.UseCases.User
   public class CancelUserFromEventUseCase
   {
     private readonly IUserRepository userRepository;
-    private readonly IEventRepository eventRepository;
 
-    public CancelUserFromEventUseCase(
-        IUserRepository userRepository,
-        IEventRepository eventRepository
-    )
+    public CancelUserFromEventUseCase(IUserRepository userRepository)
     {
       this.userRepository = userRepository;
-      this.eventRepository = eventRepository;
     }
 
     public async Task ExecuteAsync(Guid userId, Guid eventId)
     {
-      var user = await userRepository.GetByIdAsync(userId);
-      var ev = await eventRepository.GetByIdAsync(eventId);
-
-      if (user == null || ev == null)
+      var result = await userRepository.CancelUserFromEvent(userId, eventId);
+      if (!result)
       {
-        throw new NotFoundException("The user or event was not found", ErrorCodes.NotFound);
+        throw new NotFoundException("User or Event not found, or user is not registered for this event", ErrorCodes.NotFound);
       }
-
-      if (!ev.Users.Any(u => u.Id == userId))
-      {
-        throw new BadRequestException(
-            "User is not registered for this event",
-            ErrorCodes.UserNotRegisteredForEvent
-        );
-      }
-
-      ev.Users.Remove(user);
-      await eventRepository.UpdateAsync(ev);
     }
   }
 }

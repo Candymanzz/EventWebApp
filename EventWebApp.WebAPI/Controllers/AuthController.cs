@@ -1,6 +1,7 @@
 ﻿using BCrypt.Net;
 using EventWebApp.Application.DTOs;
 using EventWebApp.Application.Interfaces;
+using EventWebApp.Application.UseCases.User;
 using EventWebApp.Core.Interfaces;
 using EventWebApp.Core.Model;
 using Microsoft.AspNetCore.Mvc;
@@ -14,16 +15,19 @@ namespace EventWebApp.WebAPI.Controllers
     private readonly ITokenService tokenService;
     private readonly IUserRepository userRepository;
     private readonly IConfiguration configuration;
+    private readonly UpdateRefreshTokenUseCase updateRefreshTokenUseCase;
 
     public AuthController(
         ITokenService tokenService,
         IUserRepository userRepository,
-        IConfiguration configuration
+        IConfiguration configuration,
+        UpdateRefreshTokenUseCase updateRefreshTokenUseCase
     )
     {
       this.tokenService = tokenService;
       this.userRepository = userRepository;
       this.configuration = configuration;
+      this.updateRefreshTokenUseCase = updateRefreshTokenUseCase;
     }
 
     [HttpPost("login")]
@@ -94,7 +98,7 @@ namespace EventWebApp.WebAPI.Controllers
       var refreshTokenDays = configuration.GetValue<int>("JwtSettings:RefreshTokenDays", 7);
       var expiry = DateTime.UtcNow.AddDays(refreshTokenDays);
 
-      await userRepository.UpdateRefreshTokenAsync(user.Id, newRefreshToken, expiry);
+      await updateRefreshTokenUseCase.ExecuteAsync(user.Id, newRefreshToken, expiry);
 
       return Ok(
           new AuthResponse { AccessToken = newAccessToken, RefreshToken = newRefreshToken }

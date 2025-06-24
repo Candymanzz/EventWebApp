@@ -1,5 +1,4 @@
-﻿using EventWebApp.Application.Exceptions;
-using EventWebApp.Core.Interfaces;
+﻿using EventWebApp.Core.Interfaces;
 using EventWebApp.Core.Model;
 using EventWebApp.Infrastructure.Date;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +20,7 @@ namespace EventWebApp.Infrastructure.Repositories
       await appDbContext.SaveChangesAsync();
     }
 
-    public async Task CancelUserFromEvent(Guid userId, Guid eventId)
+    public async Task<bool> CancelUserFromEvent(Guid userId, Guid eventId)
     {
       var user = await appDbContext
           .Users.Include(u => u.Events)
@@ -32,13 +31,17 @@ namespace EventWebApp.Infrastructure.Repositories
 
       if (_event == null || user == null)
       {
-        throw new NotFoundException("User or Event not found.", ErrorCodes.NotFound);
+        return false;
       }
 
       if (_event.Users.Contains(user))
       {
         _event.Users.Remove(user);
+        await appDbContext.SaveChangesAsync();
+        return true;
       }
+
+      return false;
     }
 
     public async Task<User?> GetByIdAsync(Guid id)
@@ -59,7 +62,7 @@ namespace EventWebApp.Infrastructure.Repositories
       return _event?.Users ?? Enumerable.Empty<User>();
     }
 
-    public async Task RegisterUserToEventAsync(Guid userId, Guid eventId)
+    public async Task<RegisterUserToEventResult> RegisterUserToEventAsync(Guid userId, Guid eventId)
     {
       var user = await appDbContext
           .Users.Include(u => u.Events)
@@ -70,27 +73,22 @@ namespace EventWebApp.Infrastructure.Repositories
 
       if (_event == null || user == null)
       {
-        throw new NotFoundException("User or Event not found.", ErrorCodes.NotFound);
+        return RegisterUserToEventResult.UserOrEventNotFound;
       }
 
       if (_event.Users.Contains(user))
       {
-        throw new AlreadyExistsException(
-            "User is already registered for this event.",
-            ErrorCodes.UserAlreadyRegisteredForEvent
-        );
+        return RegisterUserToEventResult.UserAlreadyRegistered;
       }
 
       if (_event.Users.Count >= _event.MaxParticipants)
       {
-        throw new ConflictException(
-            "Event has reached maximum number of participants.",
-            ErrorCodes.EventFull
-        );
+        return RegisterUserToEventResult.EventFull;
       }
 
       _event.Users.Add(user);
       await appDbContext.SaveChangesAsync();
+      return RegisterUserToEventResult.Success;
     }
 
     public async Task<User?> GetByEmailAsync(string email)
@@ -108,18 +106,19 @@ namespace EventWebApp.Infrastructure.Repositories
           .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
     }
 
-    public async Task UpdateRefreshTokenAsync(Guid userId, string refreshToken, DateTime expiry)
+    public async Task<bool> UpdateRefreshTokenAsync(Guid userId, string refreshToken, DateTime expiry)
     {
       var user = await appDbContext.Users.FindAsync(userId);
       if (user is null)
       {
-        throw new NotFoundException("User not found.", ErrorCodes.UserNotFound);
+        return false;
       }
 
       user.RefreshToken = refreshToken;
       user.RefreshTokenExpiryTime = expiry;
 
       await appDbContext.SaveChangesAsync();
+      return true;
     }
   }
 }

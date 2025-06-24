@@ -1,4 +1,5 @@
-﻿using EventWebApp.Core.Interfaces;
+﻿using EventWebApp.Application.Exceptions;
+using EventWebApp.Core.Interfaces;
 
 namespace EventWebApp.Application.UseCases.Event
 {
@@ -13,7 +14,11 @@ namespace EventWebApp.Application.UseCases.Event
 
     public async Task ExecuteAsync(Guid evId, string relativeImagePath)
     {
-      await eventRepository.UpdateImageAsync(evId, relativeImagePath);
+      var result = await eventRepository.UpdateImageAsync(evId, relativeImagePath);
+      if (!result)
+      {
+        throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
+      }
     }
   }
 }
