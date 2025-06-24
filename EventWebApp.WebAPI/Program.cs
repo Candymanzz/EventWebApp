@@ -28,9 +28,9 @@ namespace EventWebApp.WebAPI
           options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
       );
 
-      builder.Services.AddDbContextFactory<AppDbContext>(options =>
-          options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-      );
+      // builder.Services.AddDbContextFactory<AppDbContext>(options =>
+      //     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+      // );
 
       // === Repositories ===
       builder.Services.AddScoped<IEventRepository, EventRepository>();
