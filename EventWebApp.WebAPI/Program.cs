@@ -43,7 +43,8 @@ namespace EventWebApp.WebAPI
       builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserToEventRequestValidator>();
 
       // === AutoMapper ===
-      builder.Services.AddAutoMapper(typeof(MappingProfile));
+      builder.Services.AddAutoMapper(typeof(EventMappingProfile));
+      builder.Services.AddAutoMapper(typeof(UserMappingProfile));
 
       // === Use Cases ===
       builder.Services.AddScoped<CreateEventUseCase>();
