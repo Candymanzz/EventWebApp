@@ -2,6 +2,7 @@
 using EventWebApp.Application.Interfaces;
 using EventWebApp.Core.Interfaces;
 using EventWebApp.Application.UseCases.Event;
+using EventWebApp.Infrastructure.UseCases;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

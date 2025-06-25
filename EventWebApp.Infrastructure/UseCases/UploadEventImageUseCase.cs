@@ -1,7 +1,7 @@
-﻿using EventWebApp.Application.Exceptions;
+using EventWebApp.Application.Exceptions;
 using EventWebApp.Core.Interfaces;
 
-namespace EventWebApp.Application.UseCases.Event
+namespace EventWebApp.Infrastructure.UseCases
 {
   public class UploadEventImageUseCase
   {
