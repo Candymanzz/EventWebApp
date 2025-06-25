@@ -75,7 +75,7 @@ namespace EventWebApp.Infrastructure.Repositories
     public async Task<Event?> GetByIdAsync(Guid id)
     {
       return await appDbContext
-          .Events.AsNoTracking()
+          .Events
           .Include(e => e.Users)
           .FirstOrDefaultAsync(e => e.Id == id);
     }
@@ -118,6 +118,16 @@ namespace EventWebApp.Infrastructure.Repositories
           .Include(e => e.Users)
           .Where(e => e.Users.Any(u => u.Id == userId))
           .ToListAsync();
+    }
+
+    public async Task<bool> IsUserRegisteredForEventAsync(Guid userId, Guid eventId)
+    {
+      return await appDbContext
+          .Events
+          .AsNoTracking()
+          .Where(e => e.Id == eventId)
+          .SelectMany(e => e.Users)
+          .AnyAsync(u => u.Id == userId);
     }
   }
 }

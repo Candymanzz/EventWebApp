@@ -26,7 +26,8 @@ namespace EventWebApp.Application.UseCases.User
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
 
-      if (_event.Users.Contains(user))
+      var isUserRegistered = await _unitOfWork.Events.IsUserRegisteredForEventAsync(userId, eventId);
+      if (isUserRegistered)
       {
         throw new AlreadyExistsException(
             "User is already registered for this event.",

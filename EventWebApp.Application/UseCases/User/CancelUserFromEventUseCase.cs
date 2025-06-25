@@ -26,9 +26,10 @@ namespace EventWebApp.Application.UseCases.User
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
 
-      if (!_event.Users.Contains(user))
+      var isUserRegistered = _event.Users.Any(u => u.Id == userId);
+      if (!isUserRegistered)
       {
-        throw new NotFoundException("User is not registered for this event", ErrorCodes.NotFound);
+        throw new NotFoundException("User is not registered for this event", ErrorCodes.UserNotRegisteredForEvent);
       }
 
       _event.Users.Remove(user);

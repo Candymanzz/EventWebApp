@@ -36,7 +36,7 @@ namespace EventWebApp.Infrastructure.Repositories
     public async Task<User?> GetByIdAsync(Guid id)
     {
       return await appDbContext
-          .Users.AsNoTracking()
+          .Users
           .Include(u => u.Events)
           .FirstOrDefaultAsync(u => u.Id == id);
     }

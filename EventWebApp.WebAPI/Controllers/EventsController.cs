@@ -153,7 +153,7 @@ namespace EventWebApp.WebAPI.Controllers
       await notifier.NotifyUsersAsync(
           new[] { "Pavel91104@gmail.com" },
           "Здравствуйте, Павел",
-          "Мы будем рады видеть вас на собеседовании на эливетор."
+          "Текст письма"
       );
 
       return Ok("Письмо отправлено");

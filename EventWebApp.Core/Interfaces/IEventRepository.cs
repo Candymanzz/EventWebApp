@@ -18,5 +18,6 @@ namespace EventWebApp.Core.Interfaces
     Task DeleteAsync(Guid id);
     Task<PaginatedResult<Event>> GetPagedAsync(int pageNumber, int pageSize);
     Task<List<Event>> GetEventsByUserIdAsync(Guid userId);
+    Task<bool> IsUserRegisteredForEventAsync(Guid userId, Guid eventId);
   }
 }
