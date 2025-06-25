@@ -5,26 +5,22 @@ namespace EventWebApp.Application.UseCases.User
 {
   public class CancelUserFromEventUseCase
   {
-    private readonly IUserRepository userRepository;
-    private readonly IEventRepository eventRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CancelUserFromEventUseCase(
-        IUserRepository userRepository,
-        IEventRepository eventRepository)
+    public CancelUserFromEventUseCase(IUnitOfWork unitOfWork)
     {
-      this.userRepository = userRepository;
-      this.eventRepository = eventRepository;
+      this._unitOfWork = unitOfWork;
     }
 
     public async Task ExecuteAsync(Guid userId, Guid eventId)
     {
-      var user = await userRepository.GetByIdAsync(userId);
+      var user = await _unitOfWork.Users.GetByIdAsync(userId);
       if (user == null)
       {
         throw new NotFoundException("User not found", ErrorCodes.NotFound);
       }
 
-      var _event = await eventRepository.GetByIdAsync(eventId);
+      var _event = await _unitOfWork.Events.GetByIdAsync(eventId);
       if (_event == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
@@ -36,7 +32,8 @@ namespace EventWebApp.Application.UseCases.User
       }
 
       _event.Users.Remove(user);
-      await eventRepository.UpdateAsync(_event);
+      await _unitOfWork.Events.UpdateAsync(_event);
+      await _unitOfWork.SaveChangesAsync();
     }
   }
 }

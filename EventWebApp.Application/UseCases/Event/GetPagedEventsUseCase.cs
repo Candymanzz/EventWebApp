@@ -5,18 +5,18 @@ using EventWebApp.Core.Model;
 
 public class GetPagedEventsUseCase
 {
-  private readonly IEventRepository eventRepository;
+  private readonly IUnitOfWork _unitOfWork;
   private readonly IMapper mapper;
 
-  public GetPagedEventsUseCase(IEventRepository eventRepository, IMapper mapper)
+  public GetPagedEventsUseCase(IUnitOfWork unitOfWork, IMapper mapper)
   {
-    this.eventRepository = eventRepository;
+    this._unitOfWork = unitOfWork;
     this.mapper = mapper;
   }
 
   public async Task<PaginatedResult<EventDto>> ExecuteAsync(PaginationRequest request)
   {
-    var result = await eventRepository.GetPagedAsync(request.PageNumber, request.PageSize);
+    var result = await _unitOfWork.Events.GetPagedAsync(request.PageNumber, request.PageSize);
 
     return new PaginatedResult<EventDto>
     {

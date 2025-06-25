@@ -5,34 +5,27 @@ namespace EventWebApp.Application.UseCases.User
 {
   public class RegisterUserToEventUseCase
   {
-    private readonly IUserRepository userRepository;
-    private readonly IEventRepository eventRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public RegisterUserToEventUseCase(
-        IUserRepository userRepository,
-        IEventRepository eventRepository)
+    public RegisterUserToEventUseCase(IUnitOfWork unitOfWork)
     {
-      this.userRepository = userRepository;
-      this.eventRepository = eventRepository;
+      this._unitOfWork = unitOfWork;
     }
 
     public async Task ExecuteAsync(Guid userId, Guid eventId)
     {
-      // Получение и проверка существования пользователя
-      var user = await userRepository.GetByIdAsync(userId);
+      var user = await _unitOfWork.Users.GetByIdAsync(userId);
       if (user == null)
       {
         throw new NotFoundException("User not found", ErrorCodes.NotFound);
       }
 
-      // Получение и проверка существования события
-      var _event = await eventRepository.GetByIdAsync(eventId);
+      var _event = await _unitOfWork.Events.GetByIdAsync(eventId);
       if (_event == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
 
-      // Проверка, не зарегистрирован ли пользователь уже на событие
       if (_event.Users.Contains(user))
       {
         throw new AlreadyExistsException(
@@ -41,7 +34,6 @@ namespace EventWebApp.Application.UseCases.User
         );
       }
 
-      // Проверка, не заполнено ли событие
       if (_event.Users.Count >= _event.MaxParticipants)
       {
         throw new ConflictException(
@@ -50,9 +42,9 @@ namespace EventWebApp.Application.UseCases.User
         );
       }
 
-      // Добавление пользователя к событию
       _event.Users.Add(user);
-      await eventRepository.UpdateAsync(_event);
+      await _unitOfWork.Events.UpdateAsync(_event);
+      await _unitOfWork.SaveChangesAsync();
     }
   }
 }

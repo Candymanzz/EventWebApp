@@ -5,25 +5,24 @@ namespace EventWebApp.Infrastructure.UseCases
 {
   public class UploadEventImageUseCase
   {
-    private readonly IEventRepository eventRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UploadEventImageUseCase(IEventRepository eventRepository)
+    public UploadEventImageUseCase(IUnitOfWork unitOfWork)
     {
-      this.eventRepository = eventRepository;
+      this._unitOfWork = unitOfWork;
     }
 
     public async Task ExecuteAsync(Guid eventId, string relativeImagePath)
     {
-      // Проверка существования события
-      var existingEvent = await eventRepository.GetByIdAsync(eventId);
+      var existingEvent = await _unitOfWork.Events.GetByIdAsync(eventId);
       if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
 
-      // Обновление изображения
       existingEvent.ImageUrl = relativeImagePath;
-      await eventRepository.UpdateAsync(existingEvent);
+      await _unitOfWork.Events.UpdateAsync(existingEvent);
+      await _unitOfWork.SaveChangesAsync();
     }
   }
 }

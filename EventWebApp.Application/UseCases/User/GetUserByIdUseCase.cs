@@ -6,18 +6,18 @@ namespace EventWebApp.Application.UseCases.User
 {
   public class GetUserByIdUseCase
   {
-    private readonly IUserRepository userRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper mapper;
 
-    public GetUserByIdUseCase(IUserRepository userRepository, IMapper mapper)
+    public GetUserByIdUseCase(IUnitOfWork unitOfWork, IMapper mapper)
     {
-      this.userRepository = userRepository;
+      this._unitOfWork = unitOfWork;
       this.mapper = mapper;
     }
 
     public async Task<UserDto?> ExecuteAsync(Guid id)
     {
-      var user = await userRepository.GetByIdAsync(id);
+      var user = await _unitOfWork.Users.GetByIdAsync(id);
       return user == null ? null : mapper.Map<UserDto>(user);
     }
   }

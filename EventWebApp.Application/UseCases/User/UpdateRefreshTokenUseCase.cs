@@ -5,16 +5,16 @@ namespace EventWebApp.Application.UseCases.User
 {
   public class UpdateRefreshTokenUseCase
   {
-    private readonly IUserRepository userRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UpdateRefreshTokenUseCase(IUserRepository userRepository)
+    public UpdateRefreshTokenUseCase(IUnitOfWork unitOfWork)
     {
-      this.userRepository = userRepository;
+      this._unitOfWork = unitOfWork;
     }
 
     public async Task ExecuteAsync(Guid userId, string? refreshToken, DateTime? expiry)
     {
-      var user = await userRepository.GetByIdAsync(userId);
+      var user = await _unitOfWork.Users.GetByIdAsync(userId);
       if (user == null)
       {
         throw new NotFoundException("User not found.", ErrorCodes.UserNotFound);
@@ -22,7 +22,8 @@ namespace EventWebApp.Application.UseCases.User
 
       user.RefreshToken = refreshToken;
       user.RefreshTokenExpiryTime = expiry;
-      await userRepository.UpdateAsync(user);
+      await _unitOfWork.Users.UpdateAsync(user);
+      await _unitOfWork.SaveChangesAsync();
     }
   }
 }

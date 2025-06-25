@@ -17,7 +17,6 @@ namespace EventWebApp.Infrastructure.Repositories
     public async Task AddAsync(Event _event)
     {
       appDbContext.Events.Add(_event);
-      await appDbContext.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(Guid id)
@@ -26,7 +25,6 @@ namespace EventWebApp.Infrastructure.Repositories
       if (_event != null)
       {
         appDbContext.Events.Remove(_event);
-        await appDbContext.SaveChangesAsync();
       }
     }
 
@@ -94,7 +92,6 @@ namespace EventWebApp.Infrastructure.Repositories
     public async Task UpdateAsync(Event _event)
     {
       appDbContext.Events.Update(_event);
-      await appDbContext.SaveChangesAsync();
     }
 
     public async Task<PaginatedResult<Event>> GetPagedAsync(int pageNumber, int pageSize)

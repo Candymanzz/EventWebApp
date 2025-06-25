@@ -4,21 +4,21 @@ using EventWebApp.Core.Interfaces;
 
 namespace EventWebApp.Application.UseCases.Event
 {
-    public class GetEventByIdUseCase
+  public class GetEventByIdUseCase
+  {
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper mapper;
+
+    public GetEventByIdUseCase(IUnitOfWork unitOfWork, IMapper mapper)
     {
-        private readonly IEventRepository eventRepository;
-        private readonly IMapper mapper;
-
-        public GetEventByIdUseCase(IEventRepository eventRepository, IMapper mapper)
-        {
-            this.eventRepository = eventRepository;
-            this.mapper = mapper;
-        }
-
-        public async Task<EventDto?> ExecuteAsync(Guid id)
-        {
-            var ev = await eventRepository.GetByIdAsync(id);
-            return ev == null ? null : mapper.Map<EventDto>(ev);
-        }
+      this._unitOfWork = unitOfWork;
+      this.mapper = mapper;
     }
+
+    public async Task<EventDto?> ExecuteAsync(Guid id)
+    {
+      var ev = await _unitOfWork.Events.GetByIdAsync(id);
+      return ev == null ? null : mapper.Map<EventDto>(ev);
+    }
+  }
 }

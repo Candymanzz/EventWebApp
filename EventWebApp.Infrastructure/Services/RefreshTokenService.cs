@@ -10,25 +10,25 @@ namespace EventWebApp.Infrastructure.Services
   public class RefreshTokenService : IRefreshTokenService
   {
     private readonly ITokenService tokenService;
-    private readonly IUserRepository userRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly UpdateRefreshTokenUseCase updateRefreshTokenUseCase;
     private readonly IConfiguration configuration;
 
     public RefreshTokenService(
         ITokenService tokenService,
-        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
         UpdateRefreshTokenUseCase updateRefreshTokenUseCase,
         IConfiguration configuration)
     {
       this.tokenService = tokenService;
-      this.userRepository = userRepository;
+      this._unitOfWork = unitOfWork;
       this.updateRefreshTokenUseCase = updateRefreshTokenUseCase;
       this.configuration = configuration;
     }
 
     public async Task<AuthResponse> RefreshAccessTokenAsync(string refreshToken)
     {
-      var user = await userRepository.GetByRefreshTokenAsync(refreshToken);
+      var user = await _unitOfWork.Users.GetByRefreshTokenAsync(refreshToken);
       if (user == null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
       {
         throw new UnauthorizedAccessException("Invalid or expired refresh token");
@@ -46,7 +46,7 @@ namespace EventWebApp.Infrastructure.Services
 
     public async Task<AuthResponse> GenerateTokensForUserAsync(Guid userId)
     {
-      var user = await userRepository.GetByIdAsync(userId);
+      var user = await _unitOfWork.Users.GetByIdAsync(userId);
       if (user == null)
       {
         throw new ArgumentException("User not found");
@@ -68,7 +68,7 @@ namespace EventWebApp.Infrastructure.Services
 
     public async Task<bool> ValidateRefreshTokenAsync(string refreshToken)
     {
-      var user = await userRepository.GetByRefreshTokenAsync(refreshToken);
+      var user = await _unitOfWork.Users.GetByRefreshTokenAsync(refreshToken);
       return user != null && user.RefreshTokenExpiryTime > DateTime.UtcNow;
     }
 

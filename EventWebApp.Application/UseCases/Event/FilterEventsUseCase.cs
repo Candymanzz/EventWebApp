@@ -4,31 +4,31 @@ using EventWebApp.Core.Interfaces;
 
 namespace EventWebApp.Application.UseCases.Event
 {
-    public class FilterEventsUseCase
+  public class FilterEventsUseCase
+  {
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper mapper;
+
+    public FilterEventsUseCase(IUnitOfWork unitOfWork, IMapper mapper)
     {
-        private readonly IEventRepository eventRepository;
-        private readonly IMapper mapper;
-
-        public FilterEventsUseCase(IEventRepository eventRepository, IMapper mapper)
-        {
-            this.eventRepository = eventRepository;
-            this.mapper = mapper;
-        }
-
-        public async Task<IEnumerable<EventDto>> ExecuteAsync(
-            string? category,
-            string? location,
-            DateTime? dateTime,
-            string? title
-        )
-        {
-            var events = await eventRepository.GetByFiltersAsync(
-                category,
-                location,
-                dateTime,
-                title
-            );
-            return mapper.Map<IEnumerable<EventDto>>(events);
-        }
+      this._unitOfWork = unitOfWork;
+      this.mapper = mapper;
     }
+
+    public async Task<IEnumerable<EventDto>> ExecuteAsync(
+        string? category,
+        string? location,
+        DateTime? dateTime,
+        string? title
+    )
+    {
+      var events = await _unitOfWork.Events.GetByFiltersAsync(
+          category,
+          location,
+          dateTime,
+          title
+      );
+      return mapper.Map<IEnumerable<EventDto>>(events);
+    }
+  }
 }

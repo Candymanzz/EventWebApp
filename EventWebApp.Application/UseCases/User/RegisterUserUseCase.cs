@@ -7,17 +7,17 @@ namespace EventWebApp.Application.UseCases.User
 {
   public class RegisterUserUseCase
   {
-    private readonly IUserRepository userRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper mapper;
     private readonly IValidator<UserRegistrationRequest> validator;
 
     public RegisterUserUseCase(
-        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
         IMapper mapper,
         IValidator<UserRegistrationRequest> validator
     )
     {
-      this.userRepository = userRepository;
+      this._unitOfWork = unitOfWork;
       this.mapper = mapper;
       this.validator = validator;
     }
@@ -31,7 +31,8 @@ namespace EventWebApp.Application.UseCases.User
       }
 
       var user = mapper.Map<Core.Model.User>(request);
-      await userRepository.AddAsync(user);
+      await _unitOfWork.Users.AddAsync(user);
+      await _unitOfWork.SaveChangesAsync();
       return mapper.Map<UserDto>(user);
     }
   }

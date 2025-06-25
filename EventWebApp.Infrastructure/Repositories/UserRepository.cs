@@ -17,13 +17,11 @@ namespace EventWebApp.Infrastructure.Repositories
     public async Task AddAsync(User user)
     {
       appDbContext.Users.Add(user);
-      await appDbContext.SaveChangesAsync();
     }
 
     public async Task UpdateAsync(User user)
     {
       appDbContext.Users.Update(user);
-      await appDbContext.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(Guid id)
@@ -32,7 +30,6 @@ namespace EventWebApp.Infrastructure.Repositories
       if (user != null)
       {
         appDbContext.Users.Remove(user);
-        await appDbContext.SaveChangesAsync();
       }
     }
 

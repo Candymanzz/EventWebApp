@@ -8,17 +8,17 @@ namespace EventWebApp.Application.UseCases.Event
 {
   public class UpdateEventUseCase
   {
-    private readonly IEventRepository eventRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IValidator<UpdateEventRequest> validator;
     private readonly IMapper mapper;
 
     public UpdateEventUseCase(
-        IEventRepository eventRepository,
+        IUnitOfWork unitOfWork,
         IValidator<UpdateEventRequest> validator,
         IMapper mapper
     )
     {
-      this.eventRepository = eventRepository;
+      this._unitOfWork = unitOfWork;
       this.validator = validator;
       this.mapper = mapper;
     }
@@ -31,7 +31,7 @@ namespace EventWebApp.Application.UseCases.Event
         throw new ValidationException(result.Errors);
       }
 
-      var existingEvent = await eventRepository.GetByIdAsync(request.Id);
+      var existingEvent = await _unitOfWork.Events.GetByIdAsync(request.Id);
       if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
@@ -39,7 +39,8 @@ namespace EventWebApp.Application.UseCases.Event
 
       var update = mapper.Map<Core.Model.Event>(request);
       update.DateTime = DateTime.SpecifyKind(update.DateTime, DateTimeKind.Utc);
-      await eventRepository.UpdateAsync(update);
+      await _unitOfWork.Events.UpdateAsync(update);
+      await _unitOfWork.SaveChangesAsync();
     }
   }
 }

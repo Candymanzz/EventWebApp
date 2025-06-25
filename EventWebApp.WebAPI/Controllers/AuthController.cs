@@ -12,19 +12,19 @@ namespace EventWebApp.WebAPI.Controllers
   public class AuthController : ControllerBase
   {
     private readonly ITokenService tokenService;
-    private readonly IUserRepository userRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration configuration;
     private readonly IRefreshTokenService refreshTokenService;
 
     public AuthController(
         ITokenService tokenService,
-        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
         IConfiguration configuration,
         IRefreshTokenService refreshTokenService
     )
     {
       this.tokenService = tokenService;
-      this.userRepository = userRepository;
+      this._unitOfWork = unitOfWork;
       this.configuration = configuration;
       this.refreshTokenService = refreshTokenService;
     }
@@ -32,7 +32,7 @@ namespace EventWebApp.WebAPI.Controllers
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-      var user = await userRepository.GetByEmailAsync(request.Email);
+      var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
       if (user == null)
       {
         return Ok(new { requiresDetails = true, email = request.Email });
@@ -51,7 +51,7 @@ namespace EventWebApp.WebAPI.Controllers
     [HttpPost("register-details")]
     public async Task<IActionResult> RegisterDetails([FromBody] RegisterDetailsRequest request)
     {
-      var existingUser = await userRepository.GetByEmailAsync(request.Email);
+      var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
       if (existingUser != null)
       {
         return BadRequest("User already exists.");
@@ -75,7 +75,8 @@ namespace EventWebApp.WebAPI.Controllers
         RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(refreshTokenDays),
       };
 
-      await userRepository.AddAsync(newUser);
+      await _unitOfWork.Users.AddAsync(newUser);
+      await _unitOfWork.SaveChangesAsync();
 
       var accessToken = tokenService.GenerateAccessToken(newUser);
 

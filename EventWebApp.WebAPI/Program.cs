@@ -15,6 +15,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using EventWebApp.Infrastructure.UnitOfWork;
 
 namespace EventWebApp.WebAPI
 {
@@ -34,8 +35,7 @@ namespace EventWebApp.WebAPI
       // );
 
       // === Repositories ===
-      builder.Services.AddScoped<IEventRepository, EventRepository>();
-      builder.Services.AddScoped<IUserRepository, UserRepository>();
+      builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
       // === Validators ===
       builder.Services.AddValidatorsFromAssemblyContaining<CreateEventRequestValidator>();

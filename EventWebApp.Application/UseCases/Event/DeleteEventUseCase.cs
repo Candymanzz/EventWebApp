@@ -5,24 +5,23 @@ namespace EventWebApp.Application.UseCases.Event
 {
   public class DeleteEventUseCase
   {
-    private readonly IEventRepository eventRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public DeleteEventUseCase(IEventRepository eventRepository)
+    public DeleteEventUseCase(IUnitOfWork unitOfWork)
     {
-      this.eventRepository = eventRepository;
+      this._unitOfWork = unitOfWork;
     }
 
     public async Task ExecuteAsync(Guid id)
     {
-      // Проверка существования события
-      var existingEvent = await eventRepository.GetByIdAsync(id);
+      var existingEvent = await _unitOfWork.Events.GetByIdAsync(id);
       if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
 
-      // Удаление готовой сущности
-      await eventRepository.DeleteAsync(id);
+      await _unitOfWork.Events.DeleteAsync(id);
+      await _unitOfWork.SaveChangesAsync();
     }
   }
 }
