@@ -16,6 +16,7 @@ namespace EventWebApp.Tests
 {
   public class EventUseCasesTests
   {
+    private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IEventRepository> _mockEventRepository;
     private readonly Mock<IValidator<CreateEventRequest>> _mockCreateValidator;
     private readonly Mock<IValidator<UpdateEventRequest>> _mockUpdateValidator;
@@ -32,51 +33,55 @@ namespace EventWebApp.Tests
 
     public EventUseCasesTests()
     {
+      _mockUnitOfWork = new Mock<IUnitOfWork>();
       _mockEventRepository = new Mock<IEventRepository>();
       _mockCreateValidator = new Mock<IValidator<CreateEventRequest>>();
       _mockUpdateValidator = new Mock<IValidator<UpdateEventRequest>>();
       _mockMapper = new Mock<IMapper>();
 
+      // Настраиваем UnitOfWork для возврата mock EventRepository
+      _mockUnitOfWork.Setup(uow => uow.Events).Returns(_mockEventRepository.Object);
+
       _createEventUseCase = new CreateEventUseCase(
-          _mockEventRepository.Object,
+          _mockUnitOfWork.Object,
           _mockCreateValidator.Object,
           _mockMapper.Object
       );
 
       _getEventByIdUseCase = new GetEventByIdUseCase(
-          _mockEventRepository.Object,
+          _mockUnitOfWork.Object,
           _mockMapper.Object
       );
 
       _updateEventUseCase = new UpdateEventUseCase(
-          _mockEventRepository.Object,
+          _mockUnitOfWork.Object,
           _mockUpdateValidator.Object,
           _mockMapper.Object
       );
 
-      _deleteEventUseCase = new DeleteEventUseCase(_mockEventRepository.Object);
+      _deleteEventUseCase = new DeleteEventUseCase(_mockUnitOfWork.Object);
 
       _getAllEventsUseCase = new GetAllEventsUseCase(
-          _mockEventRepository.Object,
+          _mockUnitOfWork.Object,
           _mockMapper.Object
       );
 
       _getByTitleUseCase = new GetByTitleUseCase(
-          _mockEventRepository.Object,
+          _mockUnitOfWork.Object,
           _mockMapper.Object
       );
 
       _filterEventsUseCase = new FilterEventsUseCase(
-          _mockEventRepository.Object,
+          _mockUnitOfWork.Object,
           _mockMapper.Object
       );
 
       _getPagedEventsUseCase = new GetPagedEventsUseCase(
-          _mockEventRepository.Object,
+          _mockUnitOfWork.Object,
           _mockMapper.Object
       );
 
-      _uploadEventImageUseCase = new UploadEventImageUseCase(_mockEventRepository.Object);
+      _uploadEventImageUseCase = new UploadEventImageUseCase(_mockUnitOfWork.Object);
     }
 
     [Fact]
@@ -122,6 +127,7 @@ namespace EventWebApp.Tests
 
       _mockMapper.Setup(m => m.Map<Core.Model.Event>(request)).Returns(eventEntity);
       _mockMapper.Setup(m => m.Map<EventDto>(eventEntity)).Returns(expectedDto);
+      _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync()).ReturnsAsync(1);
 
       // Act
       var result = await _createEventUseCase.ExecuteAsync(request);
@@ -131,6 +137,7 @@ namespace EventWebApp.Tests
       Assert.Equal(expectedDto.Id, result.Id);
       Assert.Equal(expectedDto.Title, result.Title);
       _mockEventRepository.Verify(r => r.AddAsync(It.IsAny<Core.Model.Event>()), Times.Once);
+      _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]
@@ -198,7 +205,7 @@ namespace EventWebApp.Tests
       var eventId = Guid.NewGuid();
       _mockEventRepository
           .Setup(r => r.GetByIdAsync(eventId))
-          .ReturnsAsync((Core.Model.Event)null);
+          .ReturnsAsync((Core.Model.Event?)null);
 
       // Act
       var result = await _getEventByIdUseCase.ExecuteAsync(eventId);
@@ -211,8 +218,10 @@ namespace EventWebApp.Tests
     public async Task UpdateEvent_ValidRequest_UpdatesEvent()
     {
       // Arrange
+      var eventId = Guid.NewGuid();
       var request = new UpdateEventRequest
       {
+        Id = eventId,
         Title = "Updated Event",
         Description = "Updated Description",
         DateTime = DateTime.UtcNow,
@@ -226,9 +235,20 @@ namespace EventWebApp.Tests
           .Setup(v => v.ValidateAsync(It.IsAny<UpdateEventRequest>(), default))
           .ReturnsAsync(validationResult);
 
+      var existingEvent = new Core.Model.Event
+      {
+        Id = eventId,
+        Title = "Original Event",
+        Description = "Original Description",
+        DateTime = DateTime.UtcNow.AddDays(-1),
+        Location = "Original Location",
+        Category = "Original Category",
+        MaxParticipants = 100,
+      };
+
       var updatedEvent = new Core.Model.Event
       {
-        Id = Guid.NewGuid(),
+        Id = eventId,
         Title = request.Title,
         Description = request.Description,
         DateTime = request.DateTime,
@@ -237,16 +257,20 @@ namespace EventWebApp.Tests
         MaxParticipants = request.MaxParticipants,
       };
 
+      _mockEventRepository.Setup(r => r.GetByIdAsync(eventId)).ReturnsAsync(existingEvent);
       _mockMapper.Setup(m => m.Map<Core.Model.Event>(request)).Returns(updatedEvent);
+      _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync()).ReturnsAsync(1);
 
       // Act
       await _updateEventUseCase.ExecuteAsync(request);
 
       // Assert
+      _mockEventRepository.Verify(r => r.GetByIdAsync(eventId), Times.Once);
       _mockEventRepository.Verify(
           r => r.UpdateAsync(It.IsAny<Core.Model.Event>()),
           Times.Once
       );
+      _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]
@@ -257,12 +281,14 @@ namespace EventWebApp.Tests
       var existingEvent = new Core.Model.Event { Id = eventId, Title = "Test Event" };
 
       _mockEventRepository.Setup(r => r.GetByIdAsync(eventId)).ReturnsAsync(existingEvent);
+      _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync()).ReturnsAsync(1);
 
       // Act
       await _deleteEventUseCase.ExecuteAsync(eventId);
 
       // Assert
       _mockEventRepository.Verify(r => r.DeleteAsync(eventId), Times.Once);
+      _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]
@@ -427,8 +453,9 @@ namespace EventWebApp.Tests
       _mockEventRepository
           .Setup(r => r.GetByIdAsync(eventId))
           .ReturnsAsync(existingEvent);
+      _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync()).ReturnsAsync(1);
 
-      var useCase = new UploadEventImageUseCase(_mockEventRepository.Object);
+      var useCase = new UploadEventImageUseCase(_mockUnitOfWork.Object);
 
       // Act
       await useCase.ExecuteAsync(eventId, imageUrl);
@@ -437,6 +464,7 @@ namespace EventWebApp.Tests
       _mockEventRepository.Verify(r => r.GetByIdAsync(eventId), Times.Once);
       _mockEventRepository.Verify(r => r.UpdateAsync(It.Is<Core.Model.Event>(e =>
           e.Id == eventId && e.ImageUrl == imageUrl)), Times.Once);
+      _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Once);
     }
   }
 }
