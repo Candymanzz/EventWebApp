@@ -12,13 +12,17 @@ namespace EventWebApp.Application.UseCases.User
       this.userRepository = userRepository;
     }
 
-    public async Task ExecuteAsync(Guid userId, string refreshToken, DateTime expiry)
+    public async Task ExecuteAsync(Guid userId, string? refreshToken, DateTime? expiry)
     {
-      var result = await userRepository.UpdateRefreshTokenAsync(userId, refreshToken, expiry);
-      if (!result)
+      var user = await userRepository.GetByIdAsync(userId);
+      if (user == null)
       {
         throw new NotFoundException("User not found.", ErrorCodes.UserNotFound);
       }
+
+      user.RefreshToken = refreshToken;
+      user.RefreshTokenExpiryTime = expiry;
+      await userRepository.UpdateAsync(user);
     }
   }
 }

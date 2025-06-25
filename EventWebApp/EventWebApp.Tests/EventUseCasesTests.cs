@@ -417,11 +417,16 @@ namespace EventWebApp.Tests
       // Arrange
       var eventId = Guid.NewGuid();
       var imageUrl = "https://example.com/image.jpg";
+      var existingEvent = new Core.Model.Event
+      {
+        Id = eventId,
+        Title = "Test Event",
+        ImageUrl = "old-image.jpg"
+      };
 
       _mockEventRepository
-          .Setup(r => r.UpdateImageAsync(eventId, imageUrl))
-          .ReturnsAsync(true)
-          .Verifiable();
+          .Setup(r => r.GetByIdAsync(eventId))
+          .ReturnsAsync(existingEvent);
 
       var useCase = new UploadEventImageUseCase(_mockEventRepository.Object);
 
@@ -429,7 +434,9 @@ namespace EventWebApp.Tests
       await useCase.ExecuteAsync(eventId, imageUrl);
 
       // Assert
-      _mockEventRepository.Verify(r => r.UpdateImageAsync(eventId, imageUrl), Times.Once);
+      _mockEventRepository.Verify(r => r.GetByIdAsync(eventId), Times.Once);
+      _mockEventRepository.Verify(r => r.UpdateAsync(It.Is<Core.Model.Event>(e =>
+          e.Id == eventId && e.ImageUrl == imageUrl)), Times.Once);
     }
   }
 }

@@ -1,5 +1,6 @@
 using EventWebApp.Application.DTOs;
 using EventWebApp.Application.Interfaces;
+using EventWebApp.Application.UseCases.User;
 using EventWebApp.Core.Interfaces;
 using EventWebApp.Core.Model;
 using Microsoft.Extensions.Configuration;
@@ -10,15 +11,18 @@ namespace EventWebApp.Infrastructure.Services
   {
     private readonly ITokenService tokenService;
     private readonly IUserRepository userRepository;
+    private readonly UpdateRefreshTokenUseCase updateRefreshTokenUseCase;
     private readonly IConfiguration configuration;
 
     public RefreshTokenService(
         ITokenService tokenService,
         IUserRepository userRepository,
+        UpdateRefreshTokenUseCase updateRefreshTokenUseCase,
         IConfiguration configuration)
     {
       this.tokenService = tokenService;
       this.userRepository = userRepository;
+      this.updateRefreshTokenUseCase = updateRefreshTokenUseCase;
       this.configuration = configuration;
     }
 
@@ -53,7 +57,7 @@ namespace EventWebApp.Infrastructure.Services
       var refreshTokenDays = configuration.GetValue<int>("JwtSettings:RefreshTokenDays", 7);
       var expiry = DateTime.UtcNow.AddDays(refreshTokenDays);
 
-      await userRepository.UpdateRefreshTokenAsync(userId, refreshToken, expiry);
+      await updateRefreshTokenUseCase.ExecuteAsync(userId, refreshToken, expiry);
 
       return new AuthResponse
       {
@@ -70,7 +74,7 @@ namespace EventWebApp.Infrastructure.Services
 
     public async Task InvalidateRefreshTokenAsync(Guid userId)
     {
-      await userRepository.UpdateRefreshTokenAsync(userId, null, null);
+      await updateRefreshTokenUseCase.ExecuteAsync(userId, null, null);
     }
   }
 }

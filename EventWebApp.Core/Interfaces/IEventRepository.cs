@@ -16,7 +16,6 @@ namespace EventWebApp.Core.Interfaces
     Task AddAsync(Event _event);
     Task UpdateAsync(Event _event);
     Task DeleteAsync(Guid id);
-    Task<bool> UpdateImageAsync(Guid id, string imageUrl);
     Task<PaginatedResult<Event>> GetPagedAsync(int pageNumber, int pageSize);
     Task<List<Event>> GetEventsByUserIdAsync(Guid userId);
   }

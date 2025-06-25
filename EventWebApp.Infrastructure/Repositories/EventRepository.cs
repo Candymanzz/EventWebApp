@@ -97,19 +97,6 @@ namespace EventWebApp.Infrastructure.Repositories
       await appDbContext.SaveChangesAsync();
     }
 
-    public async Task<bool> UpdateImageAsync(Guid id, string imageUrl)
-    {
-      var ev = await appDbContext.Events.FindAsync(id);
-      if (ev == null)
-      {
-        return false;
-      }
-
-      ev.ImageUrl = imageUrl;
-      await appDbContext.SaveChangesAsync();
-      return true;
-    }
-
     public async Task<PaginatedResult<Event>> GetPagedAsync(int pageNumber, int pageSize)
     {
       var query = appDbContext.Events.AsNoTracking().Include(e => e.Users).AsQueryable();

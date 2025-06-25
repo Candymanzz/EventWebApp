@@ -20,28 +20,20 @@ namespace EventWebApp.Infrastructure.Repositories
       await appDbContext.SaveChangesAsync();
     }
 
-    public async Task<bool> CancelUserFromEvent(Guid userId, Guid eventId)
+    public async Task UpdateAsync(User user)
     {
-      var user = await appDbContext
-          .Users.Include(u => u.Events)
-          .FirstOrDefaultAsync(u => u.Id == userId);
-      var _event = await appDbContext
-          .Events.Include(e => e.Users)
-          .FirstOrDefaultAsync(e => e.Id == eventId);
+      appDbContext.Users.Update(user);
+      await appDbContext.SaveChangesAsync();
+    }
 
-      if (_event == null || user == null)
+    public async Task DeleteAsync(Guid id)
+    {
+      var user = await appDbContext.Users.FindAsync(id);
+      if (user != null)
       {
-        return false;
-      }
-
-      if (_event.Users.Contains(user))
-      {
-        _event.Users.Remove(user);
+        appDbContext.Users.Remove(user);
         await appDbContext.SaveChangesAsync();
-        return true;
       }
-
-      return false;
     }
 
     public async Task<User?> GetByIdAsync(Guid id)
@@ -62,35 +54,6 @@ namespace EventWebApp.Infrastructure.Repositories
       return _event?.Users ?? Enumerable.Empty<User>();
     }
 
-    public async Task<RegisterUserToEventResult> RegisterUserToEventAsync(Guid userId, Guid eventId)
-    {
-      var user = await appDbContext
-          .Users.Include(u => u.Events)
-          .FirstOrDefaultAsync(u => u.Id == userId);
-      var _event = await appDbContext
-          .Events.Include(e => e.Users)
-          .FirstOrDefaultAsync(e => e.Id == eventId);
-
-      if (_event == null || user == null)
-      {
-        return RegisterUserToEventResult.UserOrEventNotFound;
-      }
-
-      if (_event.Users.Contains(user))
-      {
-        return RegisterUserToEventResult.UserAlreadyRegistered;
-      }
-
-      if (_event.Users.Count >= _event.MaxParticipants)
-      {
-        return RegisterUserToEventResult.EventFull;
-      }
-
-      _event.Users.Add(user);
-      await appDbContext.SaveChangesAsync();
-      return RegisterUserToEventResult.Success;
-    }
-
     public async Task<User?> GetByEmailAsync(string email)
     {
       return await appDbContext
@@ -104,21 +67,6 @@ namespace EventWebApp.Infrastructure.Repositories
       return await appDbContext
           .Users.AsNoTracking()
           .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
-    }
-
-    public async Task<bool> UpdateRefreshTokenAsync(Guid userId, string? refreshToken, DateTime? expiry)
-    {
-      var user = await appDbContext.Users.FindAsync(userId);
-      if (user is null)
-      {
-        return false;
-      }
-
-      user.RefreshToken = refreshToken;
-      user.RefreshTokenExpiryTime = expiry;
-
-      await appDbContext.SaveChangesAsync();
-      return true;
     }
   }
 }

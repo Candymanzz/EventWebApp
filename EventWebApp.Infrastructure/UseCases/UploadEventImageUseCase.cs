@@ -12,13 +12,18 @@ namespace EventWebApp.Infrastructure.UseCases
       this.eventRepository = eventRepository;
     }
 
-    public async Task ExecuteAsync(Guid evId, string relativeImagePath)
+    public async Task ExecuteAsync(Guid eventId, string relativeImagePath)
     {
-      var result = await eventRepository.UpdateImageAsync(evId, relativeImagePath);
-      if (!result)
+      // Проверка существования события
+      var existingEvent = await eventRepository.GetByIdAsync(eventId);
+      if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
+
+      // Обновление изображения
+      existingEvent.ImageUrl = relativeImagePath;
+      await eventRepository.UpdateAsync(existingEvent);
     }
   }
 }
