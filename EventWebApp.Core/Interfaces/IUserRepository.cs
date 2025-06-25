@@ -11,6 +11,6 @@ namespace EventWebApp.Core.Interfaces
     Task<IEnumerable<User>> GetUsersByEvent(Guid id);
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByRefreshTokenAsync(string refreshToken);
-    Task<bool> UpdateRefreshTokenAsync(Guid userId, string refreshToken, DateTime expiry);
+    Task<bool> UpdateRefreshTokenAsync(Guid userId, string? refreshToken, DateTime? expiry);
   }
 }

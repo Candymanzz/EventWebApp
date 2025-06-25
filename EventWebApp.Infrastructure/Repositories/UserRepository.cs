@@ -106,7 +106,7 @@ namespace EventWebApp.Infrastructure.Repositories
           .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
     }
 
-    public async Task<bool> UpdateRefreshTokenAsync(Guid userId, string refreshToken, DateTime expiry)
+    public async Task<bool> UpdateRefreshTokenAsync(Guid userId, string? refreshToken, DateTime? expiry)
     {
       var user = await appDbContext.Users.FindAsync(userId);
       if (user is null)

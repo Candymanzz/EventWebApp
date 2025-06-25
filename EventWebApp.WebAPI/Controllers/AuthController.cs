@@ -1,7 +1,6 @@
 ﻿using BCrypt.Net;
 using EventWebApp.Application.DTOs;
 using EventWebApp.Application.Interfaces;
-using EventWebApp.Application.UseCases.User;
 using EventWebApp.Core.Interfaces;
 using EventWebApp.Core.Model;
 using Microsoft.AspNetCore.Mvc;
@@ -15,19 +14,19 @@ namespace EventWebApp.WebAPI.Controllers
     private readonly ITokenService tokenService;
     private readonly IUserRepository userRepository;
     private readonly IConfiguration configuration;
-    private readonly UpdateRefreshTokenUseCase updateRefreshTokenUseCase;
+    private readonly IRefreshTokenService refreshTokenService;
 
     public AuthController(
         ITokenService tokenService,
         IUserRepository userRepository,
         IConfiguration configuration,
-        UpdateRefreshTokenUseCase updateRefreshTokenUseCase
+        IRefreshTokenService refreshTokenService
     )
     {
       this.tokenService = tokenService;
       this.userRepository = userRepository;
       this.configuration = configuration;
-      this.updateRefreshTokenUseCase = updateRefreshTokenUseCase;
+      this.refreshTokenService = refreshTokenService;
     }
 
     [HttpPost("login")]
@@ -44,10 +43,9 @@ namespace EventWebApp.WebAPI.Controllers
         return BadRequest("Invalid email or password");
       }
 
-      var accessToken = tokenService.GenerateAccessToken(user);
-      var refreshToken = tokenService.GenerateRefreshToken();
+      var authResponse = await refreshTokenService.GenerateTokensForUserAsync(user.Id);
 
-      return Ok(new AuthResponse { AccessToken = accessToken, RefreshToken = refreshToken });
+      return Ok(authResponse);
     }
 
     [HttpPost("register-details")]
@@ -87,22 +85,15 @@ namespace EventWebApp.WebAPI.Controllers
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
     {
-      var user = await userRepository.GetByRefreshTokenAsync(request.RefreshToken);
-      if (user == null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
+      try
+      {
+        var authResponse = await refreshTokenService.RefreshAccessTokenAsync(request.RefreshToken);
+        return Ok(authResponse);
+      }
+      catch (UnauthorizedAccessException)
       {
         return Unauthorized("Invalid or expired refresh token");
       }
-
-      var newAccessToken = tokenService.GenerateAccessToken(user);
-      var newRefreshToken = tokenService.GenerateRefreshToken();
-      var refreshTokenDays = configuration.GetValue<int>("JwtSettings:RefreshTokenDays", 7);
-      var expiry = DateTime.UtcNow.AddDays(refreshTokenDays);
-
-      await updateRefreshTokenUseCase.ExecuteAsync(user.Id, newRefreshToken, expiry);
-
-      return Ok(
-          new AuthResponse { AccessToken = newAccessToken, RefreshToken = newRefreshToken }
-      );
     }
   }
 }

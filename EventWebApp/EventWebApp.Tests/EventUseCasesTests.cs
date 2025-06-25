@@ -420,7 +420,7 @@ namespace EventWebApp.Tests
 
       _mockEventRepository
           .Setup(r => r.UpdateImageAsync(eventId, imageUrl))
-          .Returns(Task.CompletedTask)
+          .ReturnsAsync(true)
           .Verifiable();
 
       var useCase = new UploadEventImageUseCase(_mockEventRepository.Object);

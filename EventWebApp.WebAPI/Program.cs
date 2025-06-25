@@ -71,6 +71,7 @@ namespace EventWebApp.WebAPI
 
       // === JWT Authentication ===
       builder.Services.AddScoped<ITokenService, TokenService>();
+      builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
       var jwtConfig = builder.Configuration.GetSection("JwtSettings");
       var jwtKey = jwtConfig["Secret"];
