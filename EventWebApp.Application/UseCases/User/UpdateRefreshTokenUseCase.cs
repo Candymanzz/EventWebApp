@@ -14,7 +14,7 @@ namespace EventWebApp.Application.UseCases.User
 
     public async Task ExecuteAsync(Guid userId, string? refreshToken, DateTime? expiry)
     {
-      var user = await _unitOfWork.Users.GetByIdAsync(userId);
+      var user = await _unitOfWork.Users.GetByIdForUpdateAsync(userId);
       if (user == null)
       {
         throw new NotFoundException("User not found.", ErrorCodes.UserNotFound);

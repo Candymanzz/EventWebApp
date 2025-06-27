@@ -31,7 +31,7 @@ namespace EventWebApp.Application.UseCases.Event
         throw new ValidationException(result.Errors);
       }
 
-      var existingEvent = await _unitOfWork.Events.GetByIdAsync(request.Id);
+      var existingEvent = await _unitOfWork.Events.GetByIdForUpdateAsync(request.Id);
       if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);

@@ -6,6 +6,7 @@ namespace EventWebApp.Core.Interfaces
   {
     Task<IEnumerable<Event>> GetAllAsync();
     Task<Event?> GetByIdAsync(Guid id);
+    Task<Event?> GetByIdForUpdateAsync(Guid id);
     Task<IEnumerable<Event>> GetByTitleAsync(string title);
     Task<IEnumerable<Event>> GetByFiltersAsync(
         string? category,

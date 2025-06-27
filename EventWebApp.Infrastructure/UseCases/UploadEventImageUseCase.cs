@@ -14,7 +14,7 @@ namespace EventWebApp.Infrastructure.UseCases
 
     public async Task ExecuteAsync(Guid eventId, string relativeImagePath)
     {
-      var existingEvent = await _unitOfWork.Events.GetByIdAsync(eventId);
+      var existingEvent = await _unitOfWork.Events.GetByIdForUpdateAsync(eventId);
       if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);

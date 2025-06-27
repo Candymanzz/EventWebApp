@@ -37,6 +37,15 @@ namespace EventWebApp.Infrastructure.Repositories
     {
       return await appDbContext
           .Users
+          .AsNoTracking()
+          .Include(u => u.Events)
+          .FirstOrDefaultAsync(u => u.Id == id);
+    }
+
+    public async Task<User?> GetByIdForUpdateAsync(Guid id)
+    {
+      return await appDbContext
+          .Users
           .Include(u => u.Events)
           .FirstOrDefaultAsync(u => u.Id == id);
     }

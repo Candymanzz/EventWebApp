@@ -14,13 +14,13 @@ namespace EventWebApp.Application.UseCases.User
 
     public async Task ExecuteAsync(Guid userId, Guid eventId)
     {
-      var user = await _unitOfWork.Users.GetByIdAsync(userId);
+      var user = await _unitOfWork.Users.GetByIdForUpdateAsync(userId);
       if (user == null)
       {
         throw new NotFoundException("User not found", ErrorCodes.NotFound);
       }
 
-      var _event = await _unitOfWork.Events.GetByIdAsync(eventId);
+      var _event = await _unitOfWork.Events.GetByIdForUpdateAsync(eventId);
       if (_event == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);

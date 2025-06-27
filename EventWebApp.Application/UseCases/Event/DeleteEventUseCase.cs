@@ -14,7 +14,7 @@ namespace EventWebApp.Application.UseCases.Event
 
     public async Task ExecuteAsync(Guid id)
     {
-      var existingEvent = await _unitOfWork.Events.GetByIdAsync(id);
+      var existingEvent = await _unitOfWork.Events.GetByIdForUpdateAsync(id);
       if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
