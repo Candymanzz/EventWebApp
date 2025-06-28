@@ -10,6 +10,7 @@ using EventWebApp.Infrastructure.Date;
 using EventWebApp.Infrastructure.Repositories;
 using EventWebApp.Infrastructure.Services;
 using EventWebApp.Infrastructure.Settings;
+using EventWebApp.WebAPI.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -63,6 +64,12 @@ namespace EventWebApp.WebAPI
       builder.Services.AddScoped<RegisterUserUseCase>();
       builder.Services.AddScoped<GetUserEventsUseCase>();
       builder.Services.AddScoped<UpdateRefreshTokenUseCase>();
+
+      // === Validation Services ===
+      builder.Services.AddScoped<IAuthValidationService, AuthValidationService>();
+      builder.Services.AddScoped<IUserValidationService, UserValidationService>();
+      builder.Services.AddScoped<IEventValidationService, EventValidationService>();
+      builder.Services.AddScoped<IImageValidationService, ImageValidationService>();
 
       // === Email Notification ===
       builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));

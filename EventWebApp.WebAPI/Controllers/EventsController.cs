@@ -2,6 +2,7 @@
 using EventWebApp.Application.Interfaces;
 using EventWebApp.Core.Interfaces;
 using EventWebApp.Application.UseCases.Event;
+using EventWebApp.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,6 +21,8 @@ namespace EventWebApp.WebAPI.Controllers
     private readonly GetByTitleUseCase getByTitleUseCase;
     private readonly UploadEventImageUseCase uploadEventImageUseCase;
     private readonly GetPagedEventsUseCase getPagedEventsUseCase;
+    private readonly IEventValidationService _eventValidationService;
+    private readonly IImageValidationService _imageValidationService;
 
     public EventsController(
         CreateEventUseCase createEventUseCase,
@@ -30,7 +33,9 @@ namespace EventWebApp.WebAPI.Controllers
         FilterEventsUseCase filterEventsUseCase,
         GetByTitleUseCase getByTitleUseCase,
         UploadEventImageUseCase uploadEventImageUseCase,
-        GetPagedEventsUseCase getPagedEventsUseCase
+        GetPagedEventsUseCase getPagedEventsUseCase,
+        IEventValidationService eventValidationService,
+        IImageValidationService imageValidationService
     )
     {
       this.createEventUseCase = createEventUseCase;
@@ -42,6 +47,8 @@ namespace EventWebApp.WebAPI.Controllers
       this.getByTitleUseCase = getByTitleUseCase;
       this.uploadEventImageUseCase = uploadEventImageUseCase;
       this.getPagedEventsUseCase = getPagedEventsUseCase;
+      this._eventValidationService = eventValidationService;
+      this._imageValidationService = imageValidationService;
     }
 
     [HttpGet]
@@ -108,9 +115,10 @@ namespace EventWebApp.WebAPI.Controllers
     [HttpGet("search")]
     public async Task<IActionResult> SearchByTitle([FromQuery] string title, CancellationToken cancellationToken)
     {
-      if (string.IsNullOrWhiteSpace(title))
+      var (isValid, result) = await _eventValidationService.ValidateSearchByTitleAsync(title);
+      if (!isValid)
       {
-        return BadRequest("Search title cannot be empty");
+        return BadRequest(result);
       }
 
       var events = await getByTitleUseCase.ExecuteAsync(title, cancellationToken);
@@ -121,9 +129,10 @@ namespace EventWebApp.WebAPI.Controllers
     [HttpPost("{id}/upload-image")]
     public async Task<IActionResult> UploadImage(Guid id, IFormFile file, CancellationToken cancellationToken)
     {
-      if (file == null || file.Length == 0)
+      var (isValid, result) = await _imageValidationService.ValidateImageUploadAsync(file);
+      if (!isValid)
       {
-        return BadRequest("No file uploaded");
+        return BadRequest(result);
       }
 
       var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";

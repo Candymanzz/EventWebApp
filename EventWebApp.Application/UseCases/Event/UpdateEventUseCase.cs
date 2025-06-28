@@ -37,9 +37,10 @@ namespace EventWebApp.Application.UseCases.Event
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
 
-      var update = mapper.Map<Core.Model.Event>(request);
-      update.DateTime = DateTime.SpecifyKind(update.DateTime, DateTimeKind.Utc);
-      await _unitOfWork.Events.UpdateAsync(update, cancellationToken);
+      mapper.Map(request, existingEvent);
+      existingEvent.DateTime = DateTime.SpecifyKind(existingEvent.DateTime, DateTimeKind.Utc);
+
+      await _unitOfWork.Events.UpdateAsync(existingEvent, cancellationToken);
       await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
   }

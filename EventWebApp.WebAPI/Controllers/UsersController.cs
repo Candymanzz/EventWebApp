@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using EventWebApp.Application.DTOs;
 using EventWebApp.Application.UseCases.User;
+using EventWebApp.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +17,7 @@ namespace EventWebApp.WebAPI.Controllers
     private readonly RegisterUserToEventUseCase registerUserToEventUseCase;
     private readonly CancelUserFromEventUseCase cancelUserFromEventUseCase;
     private readonly GetUserEventsUseCase getUserEventsUseCase;
+    private readonly IUserValidationService _userValidationService;
 
     public UsersController(
         RegisterUserUseCase registerUserUseCase,
@@ -23,7 +25,8 @@ namespace EventWebApp.WebAPI.Controllers
         GetUsersByEventUseCase getUserByEventUseCase,
         RegisterUserToEventUseCase registerUserToEventUseCase,
         CancelUserFromEventUseCase cancelUserFromEventUseCase,
-        GetUserEventsUseCase getUserEventsUseCase
+        GetUserEventsUseCase getUserEventsUseCase,
+        IUserValidationService userValidationService
     )
     {
       this.registerUserUseCase = registerUserUseCase;
@@ -32,6 +35,7 @@ namespace EventWebApp.WebAPI.Controllers
       this.registerUserToEventUseCase = registerUserToEventUseCase;
       this.cancelUserFromEventUseCase = cancelUserFromEventUseCase;
       this.getUserEventsUseCase = getUserEventsUseCase;
+      this._userValidationService = userValidationService;
     }
 
     [HttpGet("{id}")]
@@ -66,13 +70,13 @@ namespace EventWebApp.WebAPI.Controllers
         CancellationToken cancellationToken
     )
     {
-      var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-      if (userId == null)
+      var (isValid, userId) = await _userValidationService.ValidateUserAuthenticationAsync(User);
+      if (!isValid)
       {
         return Unauthorized();
       }
 
-      await registerUserToEventUseCase.ExecuteAsync(Guid.Parse(userId), request.EventId, cancellationToken);
+      await registerUserToEventUseCase.ExecuteAsync(userId.Value, request.EventId, cancellationToken);
       return Ok();
     }
 
@@ -83,13 +87,13 @@ namespace EventWebApp.WebAPI.Controllers
         CancellationToken cancellationToken
     )
     {
-      var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-      if (userId == null)
+      var (isValid, userId) = await _userValidationService.ValidateUserAuthenticationAsync(User);
+      if (!isValid)
       {
         return Unauthorized();
       }
 
-      await cancelUserFromEventUseCase.ExecuteAsync(Guid.Parse(userId), request.EventId, cancellationToken);
+      await cancelUserFromEventUseCase.ExecuteAsync(userId.Value, request.EventId, cancellationToken);
       return Ok();
     }
 
@@ -97,13 +101,13 @@ namespace EventWebApp.WebAPI.Controllers
     [HttpGet("me/events")]
     public async Task<IActionResult> GetMyEvents(CancellationToken cancellationToken)
     {
-      var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-      if (userId == null)
+      var (isValid, userId) = await _userValidationService.ValidateUserAuthenticationAsync(User);
+      if (!isValid)
       {
         return Unauthorized();
       }
 
-      var events = await getUserEventsUseCase.ExecuteAsync(Guid.Parse(userId), cancellationToken);
+      var events = await getUserEventsUseCase.ExecuteAsync(userId.Value, cancellationToken);
       return Ok(events);
     }
   }

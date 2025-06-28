@@ -101,7 +101,7 @@ namespace EventWebApp.Infrastructure.Repositories
 
     public async Task UpdateAsync(Event _event, CancellationToken cancellationToken = default)
     {
-      appDbContext.Events.Update(_event);
+      appDbContext.Entry(_event).State = EntityState.Modified;
     }
 
     public async Task<PaginatedResult<Event>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
