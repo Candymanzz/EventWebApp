@@ -15,9 +15,9 @@ namespace EventWebApp.Application.UseCases.Event
       this.mapper = mapper;
     }
 
-    public async Task<IEnumerable<EventDto>> ExecuteAsync()
+    public async Task<IEnumerable<EventDto>> ExecuteAsync(CancellationToken cancellationToken = default)
     {
-      var events = await _unitOfWork.Events.GetAllAsync();
+      var events = await _unitOfWork.Events.GetAllAsync(cancellationToken);
       return mapper.Map<IEnumerable<EventDto>>(events);
     }
   }

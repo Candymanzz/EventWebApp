@@ -15,9 +15,9 @@ namespace EventWebApp.Application.UseCases.User
       this.mapper = mapper;
     }
 
-    public async Task<IEnumerable<UserDto>> ExecuteAsync(Guid evId)
+    public async Task<IEnumerable<UserDto>> ExecuteAsync(Guid evId, CancellationToken cancellationToken = default)
     {
-      var users = await _unitOfWork.Users.GetUsersByEvent(evId);
+      var users = await _unitOfWork.Users.GetUsersByEvent(evId, cancellationToken);
       return mapper.Map<IEnumerable<UserDto>>(users);
     }
   }

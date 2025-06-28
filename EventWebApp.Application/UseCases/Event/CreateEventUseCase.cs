@@ -22,9 +22,9 @@ namespace EventWebApp.Application.UseCases.Event
       this.mapper = mapper;
     }
 
-    public async Task<EventDto> ExecuteAsync(CreateEventRequest request)
+    public async Task<EventDto> ExecuteAsync(CreateEventRequest request, CancellationToken cancellationToken = default)
     {
-      var result = await validator.ValidateAsync(request);
+      var result = await validator.ValidateAsync(request, cancellationToken);
 
       if (!result.IsValid)
       {
@@ -33,8 +33,8 @@ namespace EventWebApp.Application.UseCases.Event
 
       var ev = mapper.Map<Core.Model.Event>(request);
       ev.DateTime = DateTime.SpecifyKind(ev.DateTime, DateTimeKind.Utc);
-      await _unitOfWork.Events.AddAsync(ev);
-      await _unitOfWork.SaveChangesAsync();
+      await _unitOfWork.Events.AddAsync(ev, cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
       return mapper.Map<EventDto>(ev);
     }
   }

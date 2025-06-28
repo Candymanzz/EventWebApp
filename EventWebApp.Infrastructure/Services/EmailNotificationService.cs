@@ -19,11 +19,14 @@ namespace EventWebApp.Infrastructure.Services
     public async Task NotifyUsersAsync(
         IEnumerable<string> userEmails,
         string subject,
-        string message
+        string message,
+        CancellationToken cancellationToken = default
     )
     {
       foreach (var email in userEmails.Distinct())
       {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var mimeMessage = new MimeMessage();
         mimeMessage.From.Add(MailboxAddress.Parse(smtpSettings.Sender));
         mimeMessage.To.Add(MailboxAddress.Parse(email));
@@ -34,11 +37,12 @@ namespace EventWebApp.Infrastructure.Services
         await client.ConnectAsync(
             smtpSettings.Host,
             smtpSettings.Port,
-            SecureSocketOptions.StartTls
+            SecureSocketOptions.StartTls,
+            cancellationToken
         );
-        await client.AuthenticateAsync(smtpSettings.Username, smtpSettings.Password);
-        await client.SendAsync(mimeMessage);
-        await client.DisconnectAsync(true);
+        await client.AuthenticateAsync(smtpSettings.Username, smtpSettings.Password, cancellationToken);
+        await client.SendAsync(mimeMessage, cancellationToken);
+        await client.DisconnectAsync(true, cancellationToken);
       }
     }
   }

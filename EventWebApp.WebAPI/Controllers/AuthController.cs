@@ -30,9 +30,9 @@ namespace EventWebApp.WebAPI.Controllers
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
-      var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+      var user = await _unitOfWork.Users.GetByEmailAsync(request.Email, cancellationToken);
       if (user == null)
       {
         return Ok(new { requiresDetails = true, email = request.Email });
@@ -43,15 +43,15 @@ namespace EventWebApp.WebAPI.Controllers
         return BadRequest("Invalid email or password");
       }
 
-      var authResponse = await refreshTokenService.GenerateTokensForUserAsync(user.Id);
+      var authResponse = await refreshTokenService.GenerateTokensForUserAsync(user.Id, cancellationToken);
 
       return Ok(authResponse);
     }
 
     [HttpPost("register-details")]
-    public async Task<IActionResult> RegisterDetails([FromBody] RegisterDetailsRequest request)
+    public async Task<IActionResult> RegisterDetails([FromBody] RegisterDetailsRequest request, CancellationToken cancellationToken)
     {
-      var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+      var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email, cancellationToken);
       if (existingUser != null)
       {
         return BadRequest("User already exists.");
@@ -75,8 +75,8 @@ namespace EventWebApp.WebAPI.Controllers
         RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(refreshTokenDays),
       };
 
-      await _unitOfWork.Users.AddAsync(newUser);
-      await _unitOfWork.SaveChangesAsync();
+      await _unitOfWork.Users.AddAsync(newUser, cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
 
       var accessToken = tokenService.GenerateAccessToken(newUser);
 
@@ -84,11 +84,11 @@ namespace EventWebApp.WebAPI.Controllers
     }
 
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
       try
       {
-        var authResponse = await refreshTokenService.RefreshAccessTokenAsync(request.RefreshToken);
+        var authResponse = await refreshTokenService.RefreshAccessTokenAsync(request.RefreshToken, cancellationToken);
         return Ok(authResponse);
       }
       catch (UnauthorizedAccessException)

@@ -1,7 +1,7 @@
 using EventWebApp.Application.Exceptions;
 using EventWebApp.Core.Interfaces;
 
-namespace EventWebApp.Infrastructure.UseCases
+namespace EventWebApp.Application.UseCases.Event
 {
   public class UploadEventImageUseCase
   {
@@ -12,17 +12,17 @@ namespace EventWebApp.Infrastructure.UseCases
       this._unitOfWork = unitOfWork;
     }
 
-    public async Task ExecuteAsync(Guid eventId, string relativeImagePath)
+    public async Task ExecuteAsync(Guid eventId, string relativeImagePath, CancellationToken cancellationToken = default)
     {
-      var existingEvent = await _unitOfWork.Events.GetByIdForUpdateAsync(eventId);
+      var existingEvent = await _unitOfWork.Events.GetByIdForUpdateAsync(eventId, cancellationToken);
       if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
 
       existingEvent.ImageUrl = relativeImagePath;
-      await _unitOfWork.Events.UpdateAsync(existingEvent);
-      await _unitOfWork.SaveChangesAsync();
+      await _unitOfWork.Events.UpdateAsync(existingEvent, cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
   }
 }

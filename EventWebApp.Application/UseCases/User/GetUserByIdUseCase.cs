@@ -15,9 +15,9 @@ namespace EventWebApp.Application.UseCases.User
       this.mapper = mapper;
     }
 
-    public async Task<UserDto?> ExecuteAsync(Guid id)
+    public async Task<UserDto?> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-      var user = await _unitOfWork.Users.GetByIdAsync(id);
+      var user = await _unitOfWork.Users.GetByIdAsync(id, cancellationToken);
       return user == null ? null : mapper.Map<UserDto>(user);
     }
   }

@@ -22,17 +22,17 @@ namespace EventWebApp.Application.UseCases.User
       this.validator = validator;
     }
 
-    public async Task<UserDto> ExecuteAsync(UserRegistrationRequest request)
+    public async Task<UserDto> ExecuteAsync(UserRegistrationRequest request, CancellationToken cancellationToken = default)
     {
-      var result = await validator.ValidateAsync(request);
+      var result = await validator.ValidateAsync(request, cancellationToken);
       if (!result.IsValid)
       {
         throw new ValidationException(result.Errors);
       }
 
       var user = mapper.Map<Core.Model.User>(request);
-      await _unitOfWork.Users.AddAsync(user);
-      await _unitOfWork.SaveChangesAsync();
+      await _unitOfWork.Users.AddAsync(user, cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
       return mapper.Map<UserDto>(user);
     }
   }

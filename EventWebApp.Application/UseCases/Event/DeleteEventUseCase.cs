@@ -12,16 +12,16 @@ namespace EventWebApp.Application.UseCases.Event
       this._unitOfWork = unitOfWork;
     }
 
-    public async Task ExecuteAsync(Guid id)
+    public async Task ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-      var existingEvent = await _unitOfWork.Events.GetByIdForUpdateAsync(id);
+      var existingEvent = await _unitOfWork.Events.GetByIdForUpdateAsync(id, cancellationToken);
       if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
 
-      await _unitOfWork.Events.DeleteAsync(id);
-      await _unitOfWork.SaveChangesAsync();
+      await _unitOfWork.Events.DeleteAsync(id, cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
   }
 }

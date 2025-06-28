@@ -14,30 +14,31 @@ namespace EventWebApp.Infrastructure.Repositories
       this.appDbContext = appDbContext;
     }
 
-    public async Task AddAsync(Event _event)
+    public async Task AddAsync(Event _event, CancellationToken cancellationToken = default)
     {
       appDbContext.Events.Add(_event);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-      var _event = await appDbContext.Events.FindAsync(id);
+      var _event = await appDbContext.Events.FindAsync(new object[] { id }, cancellationToken);
       if (_event != null)
       {
         appDbContext.Events.Remove(_event);
       }
     }
 
-    public async Task<IEnumerable<Event>> GetAllAsync()
+    public async Task<IEnumerable<Event>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-      return await appDbContext.Events.AsNoTracking().Include(e => e.Users).ToListAsync();
+      return await appDbContext.Events.AsNoTracking().Include(e => e.Users).ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<Event>> GetByFiltersAsync(
         string? category,
         string? location,
         DateTime? dateTime,
-        string? title
+        string? title,
+        CancellationToken cancellationToken = default
     )
     {
       var query = appDbContext.Events.AsNoTracking().Include(e => e.Users).AsQueryable();
@@ -67,49 +68,49 @@ namespace EventWebApp.Infrastructure.Repositories
         query = query.Where(e => e.DateTime.Date == utcDate.Date);
       }
 
-      var result = await query.ToListAsync();
+      var result = await query.ToListAsync(cancellationToken);
       Console.WriteLine($"Found {result.Count} events after filtering");
       return result;
     }
 
-    public async Task<Event?> GetByIdAsync(Guid id)
+    public async Task<Event?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
       return await appDbContext
           .Events
           .AsNoTracking()
           .Include(e => e.Users)
-          .FirstOrDefaultAsync(e => e.Id == id);
+          .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
-    public async Task<Event?> GetByIdForUpdateAsync(Guid id)
+    public async Task<Event?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
     {
       return await appDbContext
           .Events
           .Include(e => e.Users)
-          .FirstOrDefaultAsync(e => e.Id == id);
+          .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
-    public async Task<IEnumerable<Event>> GetByTitleAsync(string title)
+    public async Task<IEnumerable<Event>> GetByTitleAsync(string title, CancellationToken cancellationToken = default)
     {
       return await appDbContext
           .Events.AsNoTracking()
           .Include(e => e.Users)
           .Where(e => e.Title.ToLower().Contains(title.ToLower()))
-          .ToListAsync();
+          .ToListAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(Event _event)
+    public async Task UpdateAsync(Event _event, CancellationToken cancellationToken = default)
     {
       appDbContext.Events.Update(_event);
     }
 
-    public async Task<PaginatedResult<Event>> GetPagedAsync(int pageNumber, int pageSize)
+    public async Task<PaginatedResult<Event>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
       var query = appDbContext.Events.AsNoTracking().Include(e => e.Users).AsQueryable();
 
-      var total = await query.CountAsync();
+      var total = await query.CountAsync(cancellationToken);
 
-      var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+      var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
 
       return new PaginatedResult<Event>
       {
@@ -120,23 +121,23 @@ namespace EventWebApp.Infrastructure.Repositories
       };
     }
 
-    public async Task<List<Event>> GetEventsByUserIdAsync(Guid userId)
+    public async Task<List<Event>> GetEventsByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
       return await appDbContext
           .Events.AsNoTracking()
           .Include(e => e.Users)
           .Where(e => e.Users.Any(u => u.Id == userId))
-          .ToListAsync();
+          .ToListAsync(cancellationToken);
     }
 
-    public async Task<bool> IsUserRegisteredForEventAsync(Guid userId, Guid eventId)
+    public async Task<bool> IsUserRegisteredForEventAsync(Guid userId, Guid eventId, CancellationToken cancellationToken = default)
     {
       return await appDbContext
           .Events
           .AsNoTracking()
           .Where(e => e.Id == eventId)
           .SelectMany(e => e.Users)
-          .AnyAsync(u => u.Id == userId);
+          .AnyAsync(u => u.Id == userId, cancellationToken);
     }
   }
 }

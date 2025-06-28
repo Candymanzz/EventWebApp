@@ -26,15 +26,14 @@ namespace EventWebApp.Infrastructure.Services
       this.configuration = configuration;
     }
 
-    public async Task<AuthResponse> RefreshAccessTokenAsync(string refreshToken)
+    public async Task<AuthResponse> RefreshAccessTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
-      var user = await _unitOfWork.Users.GetByRefreshTokenAsync(refreshToken);
+      var user = await _unitOfWork.Users.GetByRefreshTokenAsync(refreshToken, cancellationToken);
       if (user == null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
       {
         throw new UnauthorizedAccessException("Invalid or expired refresh token");
       }
 
-      // Генерируем только новый access токен, refresh токен остается тем же
       var newAccessToken = tokenService.GenerateAccessToken(user);
 
       return new AuthResponse
@@ -44,9 +43,9 @@ namespace EventWebApp.Infrastructure.Services
       };
     }
 
-    public async Task<AuthResponse> GenerateTokensForUserAsync(Guid userId)
+    public async Task<AuthResponse> GenerateTokensForUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-      var user = await _unitOfWork.Users.GetByIdAsync(userId);
+      var user = await _unitOfWork.Users.GetByIdAsync(userId, cancellationToken);
       if (user == null)
       {
         throw new ArgumentException("User not found");
@@ -57,7 +56,7 @@ namespace EventWebApp.Infrastructure.Services
       var refreshTokenDays = configuration.GetValue<int>("JwtSettings:RefreshTokenDays", 7);
       var expiry = DateTime.UtcNow.AddDays(refreshTokenDays);
 
-      await updateRefreshTokenUseCase.ExecuteAsync(userId, refreshToken, expiry);
+      await updateRefreshTokenUseCase.ExecuteAsync(userId, refreshToken, expiry, cancellationToken);
 
       return new AuthResponse
       {
@@ -66,15 +65,15 @@ namespace EventWebApp.Infrastructure.Services
       };
     }
 
-    public async Task<bool> ValidateRefreshTokenAsync(string refreshToken)
+    public async Task<bool> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
-      var user = await _unitOfWork.Users.GetByRefreshTokenAsync(refreshToken);
+      var user = await _unitOfWork.Users.GetByRefreshTokenAsync(refreshToken, cancellationToken);
       return user != null && user.RefreshTokenExpiryTime > DateTime.UtcNow;
     }
 
-    public async Task InvalidateRefreshTokenAsync(Guid userId)
+    public async Task InvalidateRefreshTokenAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-      await updateRefreshTokenUseCase.ExecuteAsync(userId, null, null);
+      await updateRefreshTokenUseCase.ExecuteAsync(userId, null, null, cancellationToken);
     }
   }
 }

@@ -2,7 +2,6 @@
 using EventWebApp.Application.Interfaces;
 using EventWebApp.Core.Interfaces;
 using EventWebApp.Application.UseCases.Event;
-using EventWebApp.Infrastructure.UseCases;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,16 +45,16 @@ namespace EventWebApp.WebAPI.Controllers
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-      var result = await getAllEventsUseCase.ExecuteAsync();
+      var result = await getAllEventsUseCase.ExecuteAsync(cancellationToken);
       return Ok(result);
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-      var result = await getEventByIdUseCase.ExecuteAsync(id);
+      var result = await getEventByIdUseCase.ExecuteAsync(id, cancellationToken);
       return result == null ? NotFound() : Ok(result);
     }
 
@@ -64,7 +63,8 @@ namespace EventWebApp.WebAPI.Controllers
         [FromQuery] string? category,
         [FromQuery] string? location,
         [FromQuery] DateTime? dateTime,
-        [FromQuery] string? title
+        [FromQuery] string? title,
+        CancellationToken cancellationToken
     )
     {
       Console.WriteLine(
@@ -74,7 +74,8 @@ namespace EventWebApp.WebAPI.Controllers
           category,
           location,
           dateTime,
-          title
+          title,
+          cancellationToken
       );
       Console.WriteLine($"Found {events.Count()} events");
       return Ok(events);
@@ -82,43 +83,43 @@ namespace EventWebApp.WebAPI.Controllers
 
     [Authorize(Policy = "AdminOnly")]
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateEventRequest createEventRequest)
+    public async Task<IActionResult> Create([FromBody] CreateEventRequest createEventRequest, CancellationToken cancellationToken)
     {
-      var result = await createEventUseCase.ExecuteAsync(createEventRequest);
+      var result = await createEventUseCase.ExecuteAsync(createEventRequest, cancellationToken);
       return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [Authorize(Policy = "AdminOnly")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-      await deleteEventUseCase.ExecuteAsync(id);
+      await deleteEventUseCase.ExecuteAsync(id, cancellationToken);
       return NoContent();
     }
 
     [Authorize(Policy = "AdminOnly")]
     [HttpPut]
-    public async Task<IActionResult> Update([FromBody] UpdateEventRequest updateEventRequest)
+    public async Task<IActionResult> Update([FromBody] UpdateEventRequest updateEventRequest, CancellationToken cancellationToken)
     {
-      await updateEventUseCase.ExecuteAsync(updateEventRequest);
+      await updateEventUseCase.ExecuteAsync(updateEventRequest, cancellationToken);
       return NoContent();
     }
 
     [HttpGet("search")]
-    public async Task<IActionResult> SearchByTitle([FromQuery] string title)
+    public async Task<IActionResult> SearchByTitle([FromQuery] string title, CancellationToken cancellationToken)
     {
       if (string.IsNullOrWhiteSpace(title))
       {
         return BadRequest("Search title cannot be empty");
       }
 
-      var events = await getByTitleUseCase.ExecuteAsync(title);
+      var events = await getByTitleUseCase.ExecuteAsync(title, cancellationToken);
       return Ok(events);
     }
 
     [Authorize(Policy = "AdminOnly")]
     [HttpPost("{id}/upload-image")]
-    public async Task<IActionResult> UploadImage(Guid id, IFormFile file)
+    public async Task<IActionResult> UploadImage(Guid id, IFormFile file, CancellationToken cancellationToken)
     {
       if (file == null || file.Length == 0)
       {
@@ -131,29 +132,30 @@ namespace EventWebApp.WebAPI.Controllers
 
       using (var stream = new FileStream(absolutePath, FileMode.Create))
       {
-        await file.CopyToAsync(stream);
+        await file.CopyToAsync(stream, cancellationToken);
       }
 
       var relativePath = $"/images/events/{fileName}";
-      await uploadEventImageUseCase.ExecuteAsync(id, relativePath);
+      await uploadEventImageUseCase.ExecuteAsync(id, relativePath, cancellationToken);
 
       return Ok(new { imageUrl = relativePath });
     }
 
     [HttpGet("paged")]
-    public async Task<IActionResult> GetPaged([FromQuery] PaginationRequest request)
+    public async Task<IActionResult> GetPaged([FromQuery] PaginationRequest request, CancellationToken cancellationToken)
     {
-      var result = await getPagedEventsUseCase.ExecuteAsync(request);
+      var result = await getPagedEventsUseCase.ExecuteAsync(request, cancellationToken);
       return Ok(result);
     }
 
     [HttpGet("test-email")]
-    public async Task<IActionResult> TestEmail([FromServices] INotificationService notifier)
+    public async Task<IActionResult> TestEmail([FromServices] INotificationService notifier, CancellationToken cancellationToken)
     {
       await notifier.NotifyUsersAsync(
           new[] { "Pavel91104@gmail.com" },
           "Здравствуйте, Павел",
-          "Текст письма"
+          "Текст письма",
+          cancellationToken
       );
 
       return Ok("Письмо отправлено");

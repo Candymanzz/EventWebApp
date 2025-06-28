@@ -15,9 +15,9 @@ namespace EventWebApp.Application.UseCases.Event
       this.mapper = mapper;
     }
 
-    public async Task<EventDto?> ExecuteAsync(Guid id)
+    public async Task<EventDto?> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-      var ev = await _unitOfWork.Events.GetByIdAsync(id);
+      var ev = await _unitOfWork.Events.GetByIdAsync(id, cancellationToken);
       return ev == null ? null : mapper.Map<EventDto>(ev);
     }
   }

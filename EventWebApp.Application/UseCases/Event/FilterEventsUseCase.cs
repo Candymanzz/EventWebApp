@@ -19,14 +19,16 @@ namespace EventWebApp.Application.UseCases.Event
         string? category,
         string? location,
         DateTime? dateTime,
-        string? title
+        string? title,
+        CancellationToken cancellationToken = default
     )
     {
       var events = await _unitOfWork.Events.GetByFiltersAsync(
           category,
           location,
           dateTime,
-          title
+          title,
+          cancellationToken
       );
       return mapper.Map<IEnumerable<EventDto>>(events);
     }

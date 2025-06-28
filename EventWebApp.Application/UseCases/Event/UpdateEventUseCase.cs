@@ -23,15 +23,15 @@ namespace EventWebApp.Application.UseCases.Event
       this.mapper = mapper;
     }
 
-    public async Task ExecuteAsync(UpdateEventRequest request)
+    public async Task ExecuteAsync(UpdateEventRequest request, CancellationToken cancellationToken = default)
     {
-      var result = await validator.ValidateAsync(request);
+      var result = await validator.ValidateAsync(request, cancellationToken);
       if (!result.IsValid)
       {
         throw new ValidationException(result.Errors);
       }
 
-      var existingEvent = await _unitOfWork.Events.GetByIdForUpdateAsync(request.Id);
+      var existingEvent = await _unitOfWork.Events.GetByIdForUpdateAsync(request.Id, cancellationToken);
       if (existingEvent == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
@@ -39,8 +39,8 @@ namespace EventWebApp.Application.UseCases.Event
 
       var update = mapper.Map<Core.Model.Event>(request);
       update.DateTime = DateTime.SpecifyKind(update.DateTime, DateTimeKind.Utc);
-      await _unitOfWork.Events.UpdateAsync(update);
-      await _unitOfWork.SaveChangesAsync();
+      await _unitOfWork.Events.UpdateAsync(update, cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
   }
 }

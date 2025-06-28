@@ -14,9 +14,9 @@ public class GetPagedEventsUseCase
     this.mapper = mapper;
   }
 
-  public async Task<PaginatedResult<EventDto>> ExecuteAsync(PaginationRequest request)
+  public async Task<PaginatedResult<EventDto>> ExecuteAsync(PaginationRequest request, CancellationToken cancellationToken = default)
   {
-    var result = await _unitOfWork.Events.GetPagedAsync(request.PageNumber, request.PageSize);
+    var result = await _unitOfWork.Events.GetPagedAsync(request.PageNumber, request.PageSize, cancellationToken);
 
     return new PaginatedResult<EventDto>
     {

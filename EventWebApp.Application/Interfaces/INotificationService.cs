@@ -2,6 +2,6 @@
 {
   public interface INotificationService
   {
-    Task NotifyUsersAsync(IEnumerable<string> userEmails, string subject, string message);
+    Task NotifyUsersAsync(IEnumerable<string> userEmails, string subject, string message, CancellationToken cancellationToken = default);
   }
 }

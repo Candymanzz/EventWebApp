@@ -10,7 +10,6 @@ using EventWebApp.Infrastructure.Date;
 using EventWebApp.Infrastructure.Repositories;
 using EventWebApp.Infrastructure.Services;
 using EventWebApp.Infrastructure.Settings;
-using EventWebApp.Infrastructure.UseCases;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
