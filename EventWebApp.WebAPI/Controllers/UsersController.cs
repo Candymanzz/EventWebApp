@@ -14,28 +14,25 @@ namespace EventWebApp.WebAPI.Controllers
     private readonly RegisterUserUseCase registerUserUseCase;
     private readonly GetUserByIdUseCase getUserByIdUseCase;
     private readonly GetUsersByEventUseCase getUserByEventUseCase;
-    private readonly RegisterUserToEventUseCase registerUserToEventUseCase;
-    private readonly CancelUserFromEventUseCase cancelUserFromEventUseCase;
-    private readonly GetUserEventsUseCase getUserEventsUseCase;
-    private readonly IUserValidationService _userValidationService;
+    private readonly RegisterUserToEventWithValidationUseCase registerUserToEventWithValidationUseCase;
+    private readonly CancelUserFromEventWithValidationUseCase cancelUserFromEventWithValidationUseCase;
+    private readonly GetUserEventsWithValidationUseCase getUserEventsWithValidationUseCase;
 
     public UsersController(
         RegisterUserUseCase registerUserUseCase,
         GetUserByIdUseCase getUserByIdUseCase,
         GetUsersByEventUseCase getUserByEventUseCase,
-        RegisterUserToEventUseCase registerUserToEventUseCase,
-        CancelUserFromEventUseCase cancelUserFromEventUseCase,
-        GetUserEventsUseCase getUserEventsUseCase,
-        IUserValidationService userValidationService
+        RegisterUserToEventWithValidationUseCase registerUserToEventWithValidationUseCase,
+        CancelUserFromEventWithValidationUseCase cancelUserFromEventWithValidationUseCase,
+        GetUserEventsWithValidationUseCase getUserEventsWithValidationUseCase
     )
     {
       this.registerUserUseCase = registerUserUseCase;
       this.getUserByIdUseCase = getUserByIdUseCase;
       this.getUserByEventUseCase = getUserByEventUseCase;
-      this.registerUserToEventUseCase = registerUserToEventUseCase;
-      this.cancelUserFromEventUseCase = cancelUserFromEventUseCase;
-      this.getUserEventsUseCase = getUserEventsUseCase;
-      this._userValidationService = userValidationService;
+      this.registerUserToEventWithValidationUseCase = registerUserToEventWithValidationUseCase;
+      this.cancelUserFromEventWithValidationUseCase = cancelUserFromEventWithValidationUseCase;
+      this.getUserEventsWithValidationUseCase = getUserEventsWithValidationUseCase;
     }
 
     [HttpGet("{id}")]
@@ -70,14 +67,15 @@ namespace EventWebApp.WebAPI.Controllers
         CancellationToken cancellationToken
     )
     {
-      var (isValid, userId) = await _userValidationService.ValidateUserAuthenticationAsync(User);
-      if (!isValid)
-      {
-        return Unauthorized();
-      }
+      var result = await registerUserToEventWithValidationUseCase.ExecuteAsync(User, request.EventId, cancellationToken);
+      var (statusCode, data) = result.ToHttpResponse();
 
-      await registerUserToEventUseCase.ExecuteAsync(userId.Value, request.EventId, cancellationToken);
-      return Ok();
+      return statusCode switch
+      {
+        200 => Ok(data),
+        400 => BadRequest(data),
+        _ => StatusCode(statusCode, data)
+      };
     }
 
     [Authorize(Policy = "UserOnly")]
@@ -87,28 +85,30 @@ namespace EventWebApp.WebAPI.Controllers
         CancellationToken cancellationToken
     )
     {
-      var (isValid, userId) = await _userValidationService.ValidateUserAuthenticationAsync(User);
-      if (!isValid)
-      {
-        return Unauthorized();
-      }
+      var result = await cancelUserFromEventWithValidationUseCase.ExecuteAsync(User, request.EventId, cancellationToken);
+      var (statusCode, data) = result.ToHttpResponse();
 
-      await cancelUserFromEventUseCase.ExecuteAsync(userId.Value, request.EventId, cancellationToken);
-      return Ok();
+      return statusCode switch
+      {
+        200 => Ok(data),
+        400 => BadRequest(data),
+        _ => StatusCode(statusCode, data)
+      };
     }
 
     [Authorize(Policy = "UserOnly")]
     [HttpGet("me/events")]
     public async Task<IActionResult> GetMyEvents(CancellationToken cancellationToken)
     {
-      var (isValid, userId) = await _userValidationService.ValidateUserAuthenticationAsync(User);
-      if (!isValid)
-      {
-        return Unauthorized();
-      }
+      var result = await getUserEventsWithValidationUseCase.ExecuteAsync(User, cancellationToken);
+      var (statusCode, data) = result.ToHttpResponse();
 
-      var events = await getUserEventsUseCase.ExecuteAsync(userId.Value, cancellationToken);
-      return Ok(events);
+      return statusCode switch
+      {
+        200 => Ok(data),
+        400 => BadRequest(data),
+        _ => StatusCode(statusCode, data)
+      };
     }
   }
 }

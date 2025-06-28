@@ -10,6 +10,7 @@ using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
+using Microsoft.AspNetCore.Http;
 
 namespace EventWebApp.Tests
 {
@@ -28,7 +29,7 @@ namespace EventWebApp.Tests
     private readonly GetByTitleUseCase _getByTitleUseCase;
     private readonly FilterEventsUseCase _filterEventsUseCase;
     private readonly GetPagedEventsUseCase _getPagedEventsUseCase;
-    private readonly UploadEventImageUseCase _uploadEventImageUseCase;
+    private readonly UploadEventImageWithValidationUseCase _uploadEventImageUseCase;
 
     public EventUseCasesTests()
     {
@@ -80,7 +81,7 @@ namespace EventWebApp.Tests
           _mockMapper.Object
       );
 
-      _uploadEventImageUseCase = new UploadEventImageUseCase(_mockUnitOfWork.Object);
+      _uploadEventImageUseCase = new UploadEventImageWithValidationUseCase(_mockUnitOfWork.Object);
     }
 
     [Fact]
@@ -441,7 +442,6 @@ namespace EventWebApp.Tests
     {
       // Arrange
       var eventId = Guid.NewGuid();
-      var imageUrl = "https://example.com/image.jpg";
       var existingEvent = new Core.Model.Event
       {
         Id = eventId,
@@ -449,20 +449,24 @@ namespace EventWebApp.Tests
         ImageUrl = "old-image.jpg"
       };
 
+      var mockFile = new Mock<IFormFile>();
+      mockFile.Setup(f => f.FileName).Returns("test.jpg");
+      mockFile.Setup(f => f.Length).Returns(1024);
+
       _mockEventRepository
           .Setup(r => r.GetByIdForUpdateAsync(eventId, It.IsAny<CancellationToken>()))
           .ReturnsAsync(existingEvent);
       _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-      var useCase = new UploadEventImageUseCase(_mockUnitOfWork.Object);
+      var useCase = new UploadEventImageWithValidationUseCase(_mockUnitOfWork.Object);
 
       // Act
-      await useCase.ExecuteAsync(eventId, imageUrl);
+      var result = await useCase.ExecuteAsync(eventId, mockFile.Object, CancellationToken.None);
 
       // Assert
+      Assert.True(result.IsSuccess);
       _mockEventRepository.Verify(r => r.GetByIdForUpdateAsync(eventId, It.IsAny<CancellationToken>()), Times.Once);
-      _mockEventRepository.Verify(r => r.UpdateAsync(It.Is<Core.Model.Event>(e =>
-          e.Id == eventId && e.ImageUrl == imageUrl), It.IsAny<CancellationToken>()), Times.Once);
+      _mockEventRepository.Verify(r => r.UpdateAsync(It.IsAny<Core.Model.Event>(), It.IsAny<CancellationToken>()), Times.Once);
       _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
   }

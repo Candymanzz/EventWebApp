@@ -3,6 +3,7 @@ using EventWebApp.Application.Exceptions;
 using EventWebApp.Application.Interfaces;
 using EventWebApp.Core.Interfaces;
 using EventWebApp.Application.Mappings;
+using EventWebApp.Application.UseCases.Auth;
 using EventWebApp.Application.UseCases.Event;
 using EventWebApp.Application.UseCases.User;
 using EventWebApp.Application.Validators;
@@ -55,8 +56,9 @@ namespace EventWebApp.WebAPI
       builder.Services.AddScoped<GetEventByIdUseCase>();
       builder.Services.AddScoped<GetByTitleUseCase>();
       builder.Services.AddScoped<UpdateEventUseCase>();
-      builder.Services.AddScoped<UploadEventImageUseCase>();
       builder.Services.AddScoped<GetPagedEventsUseCase>();
+      builder.Services.AddScoped<SearchEventsUseCase>();
+      builder.Services.AddScoped<UploadEventImageWithValidationUseCase>();
       builder.Services.AddScoped<CancelUserFromEventUseCase>();
       builder.Services.AddScoped<GetUserByIdUseCase>();
       builder.Services.AddScoped<GetUsersByEventUseCase>();
@@ -64,6 +66,12 @@ namespace EventWebApp.WebAPI
       builder.Services.AddScoped<RegisterUserUseCase>();
       builder.Services.AddScoped<GetUserEventsUseCase>();
       builder.Services.AddScoped<UpdateRefreshTokenUseCase>();
+      builder.Services.AddScoped<LoginUseCase>();
+      builder.Services.AddScoped<RegisterDetailsUseCase>();
+      builder.Services.AddScoped<RefreshTokenUseCase>();
+      builder.Services.AddScoped<RegisterUserToEventWithValidationUseCase>();
+      builder.Services.AddScoped<CancelUserFromEventWithValidationUseCase>();
+      builder.Services.AddScoped<GetUserEventsWithValidationUseCase>();
 
       // === Validation Services ===
       builder.Services.AddScoped<IAuthValidationService, AuthValidationService>();
@@ -78,6 +86,8 @@ namespace EventWebApp.WebAPI
       // === JWT Authentication ===
       builder.Services.AddScoped<ITokenService, TokenService>();
       builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+      builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+      builder.Services.AddScoped<IUserContextService, UserContextService>();
 
       var jwtConfig = builder.Configuration.GetSection("JwtSettings");
       var jwtKey = jwtConfig["Secret"];

@@ -19,10 +19,9 @@ namespace EventWebApp.WebAPI.Controllers
     private readonly DeleteEventUseCase deleteEventUseCase;
     private readonly FilterEventsUseCase filterEventsUseCase;
     private readonly GetByTitleUseCase getByTitleUseCase;
-    private readonly UploadEventImageUseCase uploadEventImageUseCase;
     private readonly GetPagedEventsUseCase getPagedEventsUseCase;
-    private readonly IEventValidationService _eventValidationService;
-    private readonly IImageValidationService _imageValidationService;
+    private readonly SearchEventsUseCase searchEventsUseCase;
+    private readonly UploadEventImageWithValidationUseCase uploadEventImageWithValidationUseCase;
 
     public EventsController(
         CreateEventUseCase createEventUseCase,
@@ -32,10 +31,9 @@ namespace EventWebApp.WebAPI.Controllers
         DeleteEventUseCase deleteEventUseCase,
         FilterEventsUseCase filterEventsUseCase,
         GetByTitleUseCase getByTitleUseCase,
-        UploadEventImageUseCase uploadEventImageUseCase,
         GetPagedEventsUseCase getPagedEventsUseCase,
-        IEventValidationService eventValidationService,
-        IImageValidationService imageValidationService
+        SearchEventsUseCase searchEventsUseCase,
+        UploadEventImageWithValidationUseCase uploadEventImageWithValidationUseCase
     )
     {
       this.createEventUseCase = createEventUseCase;
@@ -45,10 +43,9 @@ namespace EventWebApp.WebAPI.Controllers
       this.deleteEventUseCase = deleteEventUseCase;
       this.filterEventsUseCase = filterEventsUseCase;
       this.getByTitleUseCase = getByTitleUseCase;
-      this.uploadEventImageUseCase = uploadEventImageUseCase;
       this.getPagedEventsUseCase = getPagedEventsUseCase;
-      this._eventValidationService = eventValidationService;
-      this._imageValidationService = imageValidationService;
+      this.searchEventsUseCase = searchEventsUseCase;
+      this.uploadEventImageWithValidationUseCase = uploadEventImageWithValidationUseCase;
     }
 
     [HttpGet]
@@ -115,39 +112,30 @@ namespace EventWebApp.WebAPI.Controllers
     [HttpGet("search")]
     public async Task<IActionResult> SearchByTitle([FromQuery] string title, CancellationToken cancellationToken)
     {
-      var (isValid, result) = await _eventValidationService.ValidateSearchByTitleAsync(title);
-      if (!isValid)
-      {
-        return BadRequest(result);
-      }
+      var result = await searchEventsUseCase.ExecuteAsync(title, cancellationToken);
+      var (statusCode, data) = result.ToHttpResponse();
 
-      var events = await getByTitleUseCase.ExecuteAsync(title, cancellationToken);
-      return Ok(events);
+      return statusCode switch
+      {
+        200 => Ok(data),
+        400 => BadRequest(data),
+        _ => StatusCode(statusCode, data)
+      };
     }
 
     [Authorize(Policy = "AdminOnly")]
     [HttpPost("{id}/upload-image")]
     public async Task<IActionResult> UploadImage(Guid id, IFormFile file, CancellationToken cancellationToken)
     {
-      var (isValid, result) = await _imageValidationService.ValidateImageUploadAsync(file);
-      if (!isValid)
+      var result = await uploadEventImageWithValidationUseCase.ExecuteAsync(id, file, cancellationToken);
+      var (statusCode, data) = result.ToHttpResponse();
+
+      return statusCode switch
       {
-        return BadRequest(result);
-      }
-
-      var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-      var path = Path.Combine("wwwroot", "images", "events", fileName);
-      var absolutePath = Path.Combine(Directory.GetCurrentDirectory(), path);
-
-      using (var stream = new FileStream(absolutePath, FileMode.Create))
-      {
-        await file.CopyToAsync(stream, cancellationToken);
-      }
-
-      var relativePath = $"/images/events/{fileName}";
-      await uploadEventImageUseCase.ExecuteAsync(id, relativePath, cancellationToken);
-
-      return Ok(new { imageUrl = relativePath });
+        200 => Ok(data),
+        400 => BadRequest(data),
+        _ => StatusCode(statusCode, data)
+      };
     }
 
     [HttpGet("paged")]

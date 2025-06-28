@@ -9,42 +9,36 @@ namespace EventWebApp.Application.UseCases.User
 
     public RegisterUserToEventUseCase(IUnitOfWork unitOfWork)
     {
-      this._unitOfWork = unitOfWork;
+      _unitOfWork = unitOfWork;
     }
 
     public async Task ExecuteAsync(Guid userId, Guid eventId, CancellationToken cancellationToken = default)
     {
-      var user = await _unitOfWork.Users.GetByIdForUpdateAsync(userId, cancellationToken);
+      var user = await _unitOfWork.Users.GetByIdAsync(userId, cancellationToken);
       if (user == null)
       {
-        throw new NotFoundException("User not found", ErrorCodes.NotFound);
+        throw new NotFoundException("User not found", ErrorCodes.UserNotFound);
       }
 
-      var _event = await _unitOfWork.Events.GetByIdForUpdateAsync(eventId, cancellationToken);
-      if (_event == null)
+      var eventEntity = await _unitOfWork.Events.GetByIdForUpdateAsync(eventId, cancellationToken);
+      if (eventEntity == null)
       {
         throw new NotFoundException("Event not found", ErrorCodes.EventNotFound);
       }
 
-      var isUserRegistered = await _unitOfWork.Events.IsUserRegisteredForEventAsync(userId, eventId, cancellationToken);
-      if (isUserRegistered)
+      var isAlreadyRegistered = await _unitOfWork.Events.IsUserRegisteredForEventAsync(userId, eventId, cancellationToken);
+      if (isAlreadyRegistered)
       {
-        throw new AlreadyExistsException(
-            "User is already registered for this event.",
-            ErrorCodes.UserAlreadyRegisteredForEvent
-        );
+        throw new ConflictException("User is already registered for this event", ErrorCodes.UserAlreadyRegisteredForEvent);
       }
 
-      if (_event.Users.Count >= _event.MaxParticipants)
+      if (eventEntity.Users.Count >= eventEntity.MaxParticipants)
       {
-        throw new ConflictException(
-            "Event has reached maximum number of participants.",
-            ErrorCodes.EventFull
-        );
+        throw new ConflictException("Event is full", ErrorCodes.EventFull);
       }
 
-      _event.Users.Add(user);
-      await _unitOfWork.Events.UpdateAsync(_event, cancellationToken);
+      eventEntity.Users.Add(user);
+      await _unitOfWork.Events.UpdateAsync(eventEntity, cancellationToken);
       await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
   }
